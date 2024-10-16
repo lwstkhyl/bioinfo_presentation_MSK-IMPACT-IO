@@ -16,9 +16,12 @@ params = { 'n_estimators' : list(range(100, 1100, 100)),
            'min_samples_split' : list(range(2, 22, 2))
             }
 
+# 注：运行时间可能长达数小时，取决于CPU性能
+# 我的运行时间：RF16--约2h RF11--约1h45min
 # ## GridSearchCV for RF16
 rf_clf = RandomForestClassifier(random_state = 0, n_jobs = -1)
 grid_cv = GridSearchCV(rf_clf, param_grid = params, cv = 5, n_jobs = -1)
+# 打印进度：加上verbose = 1参数
 # grid_cv = GridSearchCV(rf_clf, param_grid = params, cv = 5, n_jobs = -1, verbose = 1)
 grid_cv.fit(x_train, y_train.values.ravel())
 

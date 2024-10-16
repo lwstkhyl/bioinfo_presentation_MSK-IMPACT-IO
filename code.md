@@ -1,6 +1,6 @@
 ### GridSearch
 
-![GridSearch](./md-image/GridSearchCV.png){:width=100 height=100}
+![GridSearch](./md-image/GridSearchCV.png){:width=150 height=150}
 ### RandomForestClassifier
 
 

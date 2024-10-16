@@ -51,6 +51,7 @@ with open('Test_RF_Prob.txt', 'w', newline='') as wf:
     writer = csv.writer(wf, delimiter='\t')
     writer.writerows(zip(data_test['SAMPLE_ID'], data_test['Cancer_Type2'], data_test['Response'], data_test['OS_Event'], data_test['OS_Months'], data_test['PFS_Event'], data_test['PFS_Months'], data_test['TMB'], forest16.predict_proba(x_test16)[:,1], forest11.predict_proba(x_test11)[:,1]))
 
+# 注：以下两张图必须在jupyter下运行才可显示
 ## Feature importance of RF16 & RF11
 print('\n<RF16_feature Importance>')
 perm = PermutationImportance(forest16, scoring = "roc_auc", cv='prefit', random_state = 42).fit(x_train16, y_train)
