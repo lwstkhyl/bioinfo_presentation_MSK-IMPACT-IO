@@ -60,7 +60,7 @@ write_optimal_threshold <- function(pan_threshold, cancer_type, file_path){
   # 注：capture.output函数必须在终端中运行才可正常工作，在rmd中运行只能输出第一行内容
 }
 # 训练组
-training_func <- function(data, cancer_type = "Pan-cancer", file_path = "data/Pan_data/Thresholds.txt"){
+training_func <- function(data, cancer_type = "Pan-cancer", file_path = "data/Pan_Thresholds.txt"){
   draw_ROC_PRC(data, cancer_type);
   write_optimal_threshold(
     get_optimal_threshold(data),

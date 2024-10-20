@@ -26,8 +26,20 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 - `Melanoma`--只包含黑色素瘤
 - `Others`--其它
 
-之后对每组数据都画了ROC和PRC曲线，并计算了`RF16`模型的最佳阈值，结果保存在`Pan_Thresholds.txt`（泛癌）和`Thresholds.txt`（另外三组）中
+根据这四组数据，作者建了4个`RF16`模型，分别是泛癌模型和3个癌症特异性模型（即每种癌症建一个模型）。
+对每个模型都画了ROC和PRC曲线，并计算了模型的最佳阈值，结果保存在`Pan_Thresholds.txt`（泛癌模型）和`Thresholds.txt`（癌症特异性模型）中
 ![最佳阈值](./md-image/最佳阈值.png){:width=400 height=400}
-对于验证组，分组方式同训练组，但只画了ROC和PRC曲线，没有计算最佳阈值
-
+对于验证组，分组方式同训练组，但只画了ROC和PRC曲线，没有计算最佳阈值；在后面的计算中，验证组只使用癌症特异性模型，使用的最佳阈值是`Thresholds.txt`（因为都是癌症特异性模型）
 ### Evaluate_Performance
+在这一部分（5-7的python代码）中，作者干了2件事
+- 在最早的`Test_RF_Prob.txt`和`Training_RF_Prob.txt`中新添一列或两列，标明模型或者TMB预测各样本是R还是NR
+  - 如果RF16模型给出的预测值(`RF16_prob`)≥最佳阈值，就说明模型预测该样本为R（应答者），否则为NR（非应答者）
+    注：如果是特异性模型，就根据每个样本的癌症种类选择对应的癌症模型阈值。比如这个样本是Melanoma，就找Melanoma模型的最佳阈值，将`RF16_prob`与这个阈值比较
+  - 如果TMB≥10，则根据TMB的预测结果为R，否则为NR
+  
+  训练组的泛癌模型数据只统计了RF16模型预测结果`Training_RF_Prob_Pan_Predicted.txt`，训练组和验证组的癌症特异性模型数据统计了RF16模型和TMB预测结果`Training_RF_Prob_Predicted.txt`/`Test_RF_Prob_Predicted.txt`
+  ![Evaluate_Performance1](./md-image/Evaluate_Performance1.png){:width=600 height=600}
+- 根据上面的预测结果，计算并输出各模型对各种癌症的预测灵敏度、特异性、准确率、阳/阴性预测值
+  其实就是统计上面图中5组预测结果（5个红框），与真实值`Response`相对比，看看预测对了没
+  ![Evaluate_Performance2](./md-image/Evaluate_Performance2.png){:width=600 height=600}
+  类似的还有4个输出，除了上面的“训练组--泛癌模型预测结果”，还有“训练组--特异性模型预测结果”、“训练组--TMB预测结果”、“验证组--特异性模型预测结果”、“验证组--TMB预测结果”
