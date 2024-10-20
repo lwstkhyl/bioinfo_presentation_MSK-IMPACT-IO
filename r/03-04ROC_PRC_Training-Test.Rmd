@@ -60,7 +60,7 @@ write_optimal_threshold <- function(pan_threshold, cancer_type, file_path){
   # 注：capture.output函数必须在终端中运行才可正常工作，在rmd中运行只能输出第一行内容
 }
 # 训练组
-training_func <- function(data, cancer_type = "Pan-cancer", file_path = "Pan_Thresholds.txt"){
+training_func <- function(data, cancer_type = "Pan-cancer", file_path = "data/Pan_data/Thresholds.txt"){
   draw_ROC_PRC(data, cancer_type);
   write_optimal_threshold(
     get_optimal_threshold(data),
@@ -71,22 +71,22 @@ training_func <- function(data, cancer_type = "Pan-cancer", file_path = "Pan_Thr
 ```
 **训练组**：（如果想得到完整的txt文件，就在终端中运行该段代码，因为`capture.output`函数必须在终端中运行才可正常工作）
 ```{r}
-data <- read.table('../pycharm/Training_RF_Prob.txt', header = T, sep = '\t');
+data <- read.table('../pycharm/data/Training_RF_Prob.txt', header = T, sep = '\t');
 # 泛癌
 training_func(data);
 # Melanoma
 data_Melanoma <- data[grep("0", data$Cancer_Type), ];
-training_func(data_Melanoma, "Melanoma", "Thresholds.txt");
+training_func(data_Melanoma, "Melanoma", "data/Thresholds.txt");
 # NSCLC
 data_NSCLC <- data[grep("1", data$Cancer_Type), ];
-training_func(data_NSCLC, "NSCLC", "Thresholds.txt");
+training_func(data_NSCLC, "NSCLC", "data/Thresholds.txt");
 # 其它
 data_NSCLC <- data[grep("2", data$Cancer_Type), ];
-training_func(data_NSCLC, "Others", "Thresholds.txt");
+training_func(data_NSCLC, "Others", "data/Thresholds.txt");
 ```
 **验证组**：
 ```{r}
-data <- read.table('../pycharm/Test_RF_Prob.txt', header = T, sep = '\t');
+data <- read.table('../pycharm/data/Test_RF_Prob.txt', header = T, sep = '\t');
 # 泛癌
 draw_ROC_PRC(data, "Pan-cancer");
 # Melanoma

@@ -8,7 +8,7 @@ def isfloat(n):
     return True
 
 
-rf = open('../r/Thresholds.txt', 'r')
+rf = open('../r/data/Thresholds.txt', 'r')
 line = rf.readline()
 cutoff = []
 while line != '':
@@ -19,8 +19,8 @@ while line != '':
 rf.close()
 
 # 根据癌症种类，建了3个模型，有3个最佳阈值。用某个种类癌症建的模型去预测该种类癌症的样本是R还是NR
-# 在Training_RF_Prob.txt中新添两列，一列是RF16模型预测结果，另一列是TMB是否≥10，如果是则为R，否则为NR
-rf = open('Training_RF_Prob.txt', 'r')
+# 在data/Training_RF_Prob.txt中新添两列，一列是RF16模型预测结果，另一列是TMB是否≥10，如果是则为R，否则为NR
+rf = open('data/Training_RF_Prob.txt', 'r')
 wf = open('Training_RF_Prob_Predicted_new.txt', 'w')  # 结果写入到这个文件
 line = rf.readline()
 while line != '':
@@ -85,8 +85,8 @@ def evaluation(input, target):
 
 
 print('<Performance evaluation for RF16 using cancer-type-specific thresholds>')
-evaluation('Training_RF_Prob_Predicted.txt', -2)
+evaluation('data/Training_RF_Prob_Predicted.txt', -2)
 
 print('<Performance evaluation for TMB>')
-evaluation('Training_RF_Prob_Predicted.txt', -1)
+evaluation('data/Training_RF_Prob_Predicted.txt', -1)
 

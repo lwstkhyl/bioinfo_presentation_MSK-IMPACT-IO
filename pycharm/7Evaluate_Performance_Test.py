@@ -8,7 +8,7 @@ def isfloat(n):
     return True
 
 
-rf = open('../r/Thresholds.txt', 'r')
+rf = open('../r/data/Thresholds.txt', 'r')
 line = rf.readline()
 cutoff = []
 while line != '':
@@ -18,8 +18,8 @@ while line != '':
     line = rf.readline()
 rf.close()
 
-rf = open('Test_RF_Prob.txt', 'r')
-wf = open('Test_RF_Prob_Predicted.txt', 'w')
+rf = open('data/Test_RF_Prob.txt', 'r')
+wf = open('data/Test_RF_Prob_Predicted.txt', 'w')
 line = rf.readline()
 while line != '':
     line = line.strip().split('\t')
@@ -112,8 +112,8 @@ def evaluation(input, target):
 
 
 print('<Performance evaluation for RF16 using cancer-type-specific thresholds>')
-evaluation('Test_RF_Prob_Predicted.txt', -2)
+evaluation('data/Test_RF_Prob_Predicted.txt', -2)
 
 print('<Performance evaluation for TMB>')
-evaluation('Test_RF_Prob_Predicted.txt', -1)
+evaluation('data/Test_RF_Prob_Predicted.txt', -1)
 

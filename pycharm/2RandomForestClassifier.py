@@ -42,11 +42,11 @@ forest11_predict = forest11.predict(x_test11)
 header=['Sample_ID', 'Cancer_Type', 'Response', 'OS_Event', 'OS_Months', 'PFS_Event', 'PFS_Months', 'TMB', 'RF16_prob', 'RF11_prob']
 data_train.rename(columns = {'Response (1:Responder; 0:Non-responder)': 'Response'}, inplace = True)
 data_test.rename(columns = {'Response (1:Responder; 0:Non-responder)': 'Response'}, inplace = True)
-with open('Training_RF_Prob.txt', 'w', newline='') as wf:
+with open('data/Training_RF_Prob.txt', 'w', newline='') as wf:
     wf.write('\t'.join(header) + '\n')
     writer = csv.writer(wf, delimiter='\t')
     writer.writerows(zip(data_train['SAMPLE_ID'], data_train['Cancer_Type2'], data_train['Response'], data_train['OS_Event'], data_train['OS_Months'], data_train['PFS_Event'], data_train['PFS_Months'], data_train['TMB'], forest16.predict_proba(x_train16)[:,1], forest11.predict_proba(x_train11)[:,1]))
-with open('Test_RF_Prob.txt', 'w', newline='') as wf:
+with open('data/Test_RF_Prob.txt', 'w', newline='') as wf:
     wf.write('\t'.join(header) + '\n')
     writer = csv.writer(wf, delimiter='\t')
     writer.writerows(zip(data_test['SAMPLE_ID'], data_test['Cancer_Type2'], data_test['Response'], data_test['OS_Event'], data_test['OS_Months'], data_test['PFS_Event'], data_test['PFS_Months'], data_test['TMB'], forest16.predict_proba(x_test16)[:,1], forest11.predict_proba(x_test11)[:,1]))
