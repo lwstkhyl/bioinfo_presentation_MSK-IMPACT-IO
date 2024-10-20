@@ -5,14 +5,15 @@ date: "2024-10-19"
 ---
 
 ```{r}
-library(ggplot2)
-library(precrec)
-library(pROC)
+library(ggplot2);
+library(precrec);
+library(pROC);
+library(patchwork);
 ```
 
 ```{r}
 # 画ROC和PRC曲线
-draw_ROC_PRC <- function(data){
+draw_ROC_PRC <- function(data, cancer_type = ""){
   scores1 <- join_scores(data$RF16_prob, data$RF11_prob, data$TMB);
   msmdat <- mmdata(scores1, data$Response);
   msmdat2 <- mmdata(
@@ -20,8 +21,19 @@ draw_ROC_PRC <- function(data){
     modnames = c("RF16", "RF11", "TMB")
   );
   mscurves <- evalmod(msmdat2);
-  print(autoplot(mscurves));
+  all_pic <- autoplot(mscurves);  # 原始图
+  # 给图加标题（癌症种类）
+  p1 <- all_pic[[1]] + theme(legend.position = "none");
+  p2 <- all_pic[[2]];
+  all_pic_new <- (p1 + p2) + 
+    plot_annotation(title = cancer_type) &
+    theme(plot.title = element_text(hjust = 0.5));
+  print(all_pic_new);
+  # 分界线、曲线具体数值
+  if(cancer_type!="") cancer_type <- paste0(" ", cancer_type, " ");
+  print(paste0("|----------", cancer_type, "----------|"));
   print(mscurves);
+  print(paste0("|----------", paste(replicate(nchar(cancer_type), "-"), collapse = ""), "----------|"));
 }
 # 计算最佳阈值
 get_optimal_threshold <- function(data){
@@ -36,7 +48,8 @@ get_optimal_threshold <- function(data){
     auc.polygon = TRUE, auc.polygon.col = "#D1F2EB",
     legacy.axes = TRUE
   );
-  legend("bottomright", legend = c("RF16"), col = c("red"), lwd = 2);
+  # legend("bottomright", legend = c("RF16"), col = c("red"), lwd = 2);
+  title("RF16");
   pan_threshold <- ci.thresholds(prob_roc, thresholds = "best");
   return(pan_threshold);
 }
@@ -48,7 +61,7 @@ write_optimal_threshold <- function(pan_threshold, cancer_type, file_path){
 }
 # 训练组
 training_func <- function(data, cancer_type = "Pan-cancer", file_path = "Pan_Thresholds.txt"){
-  draw_ROC_PRC(data);
+  draw_ROC_PRC(data, cancer_type);
   write_optimal_threshold(
     get_optimal_threshold(data),
     cancer_type,
@@ -75,15 +88,21 @@ training_func(data_NSCLC, "Others", "Thresholds.txt");
 ```{r}
 data <- read.table('../pycharm/Test_RF_Prob.txt', header = T, sep = '\t');
 # 泛癌
-draw_ROC_PRC(data);
+draw_ROC_PRC(data, "Pan-cancer");
 # Melanoma
 data_Melanoma <- data[grep("0", data$Cancer_Type), ];
-draw_ROC_PRC(data_Melanoma);
+draw_ROC_PRC(data_Melanoma, "Melanoma");
 # NSCLC
 data_NSCLC <- data[grep("1", data$Cancer_Type), ];
-draw_ROC_PRC(data_NSCLC);
+draw_ROC_PRC(data_NSCLC, "NSCLC");
 # 其它
 data_NSCLC <- data[grep("2", data$Cancer_Type), ];
-draw_ROC_PRC(data_NSCLC);
+draw_ROC_PRC(data_NSCLC, "Others");
+```
+```{r}
+p1new <- p[[1]]+theme( legend.position =" none ")
+p2 <- p1new+p[[2]]
+print(p2)
+print(p)
 ```
 
