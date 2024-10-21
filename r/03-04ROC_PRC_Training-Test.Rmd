@@ -99,10 +99,4 @@ draw_ROC_PRC(data_NSCLC, "NSCLC");
 data_NSCLC <- data[grep("2", data$Cancer_Type), ];
 draw_ROC_PRC(data_NSCLC, "Others");
 ```
-```{r}
-p1new <- p[[1]]+theme( legend.position =" none ")
-p2 <- p1new+p[[2]]
-print(p2)
-print(p)
-```
 
