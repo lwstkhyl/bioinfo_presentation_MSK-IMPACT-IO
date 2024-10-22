@@ -27,7 +27,8 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 - `Others`--其它
 
 根据这四组数据，作者建了4个`RF16`模型，分别是泛癌模型和3个癌症特异性模型（即每种癌症建一个模型）。
-对每个模型都画了ROC和PRC曲线，并计算了RF16模型的最佳阈值，结果保存在`Pan_Thresholds.txt`（泛癌模型）和`Thresholds.txt`（癌症特异性模型）中
+注意：这里所说的“泛癌模型”和“癌症特异性模型”，都是基于上面的`RF16_prob`和`RF11_prob`打分，只是选取的最佳阈值不同（泛癌模型是对全部样本计算，而癌症特异性模型是将不同癌症的样本分开来计算）
+对每个模型都画了ROC和PRC曲线，并计算了各自的最佳阈值，结果保存在`Pan_Thresholds.txt`（泛癌模型）和`Thresholds.txt`（癌症特异性模型）中
 以“训练组--泛癌”为例：
 - **ROC-PRC曲线及其具体数值**：
   ![ROCPRC1](./md-image/ROCPRC1.png){:width=250 height=250}
@@ -55,7 +56,7 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
   ![Evaluate_Performance2](./md-image/Evaluate_Performance2.png){:width=600 height=600}
   类似的还有4个输出，除了上面的“训练组--泛癌模型预测结果”，还有“训练组--特异性模型预测结果”、“训练组--TMB预测结果”、“验证组--特异性模型预测结果”、“验证组--TMB预测结果”
 ### Brier_score
-进行生存分析，探究模型预测得分（`RF16_prob`/`RF11_prob`/`TMB`）与生存状态的关系
+进行生存分析，探究模型预测得分（`RF16_prob`/`RF11_prob`/`TMB`）与生存状态`OS`的关系
 也是将训练组和验证组分开来，每组都进行泛癌、Melanoma、NSCLC、Others共4组分析，计算了Brier score并绘制了Prediction error curves图
 以“训练组--Pan-cancer”为例：
 - **Brier score分析结果**：
@@ -65,3 +66,6 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 - **Prediction error curves图**：
   ![Brier_score2](./md-image/Brier_score2.png){:width=300 height=300}
   该图展示了模型对不同生存时间的患者的预测能力，纵坐标`是Brier score`，因此曲线越靠下预测效果越好。可以看到RF16（红色线）对生存状态的预测能力几乎也是最好的
+### C-index
+计算了训练组和验证组中，`RF16_prob`/`RF11_prob`/`TMB`这3个模型对于两种生存状态（`OS`和`PFS`）的预测能力，也是分成泛癌、Melanoma、NSCLC、Others共4组，并比较了每个模型c-index值的差异
+
