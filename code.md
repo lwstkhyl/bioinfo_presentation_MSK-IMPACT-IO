@@ -19,7 +19,7 @@
 RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（由于我这里只运行了一次，不一定是最高值）
 最后得到两个txt文件(`Test_RF_Prob.txt`和`Training_RF_Prob.txt`)，分别是验证组和训练组中的样本 使用两个模型(RF16/RF11) 预测的得分（对ICB免疫疗法有反应的概率）
 ![模型预测打分](./md-image/模型预测打分.png){:width=200 height=200}
-### ROC_PRC_Training/Test
+### ROC_PRC
 对于训练组数据，作者根据样本的癌症种类，对上面得到的数据又进行了4次“分组”，分别是
 - `Pan-cancer`--包含全部癌症种类（泛癌）
 - `NSCLC`--只包含非小细胞肺癌
@@ -27,7 +27,18 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 - `Others`--其它
 
 根据这四组数据，作者建了4个`RF16`模型，分别是泛癌模型和3个癌症特异性模型（即每种癌症建一个模型）。
-对每个模型都画了ROC和PRC曲线，并计算了模型的最佳阈值，结果保存在`Pan_Thresholds.txt`（泛癌模型）和`Thresholds.txt`（癌症特异性模型）中
+对每个模型都画了ROC和PRC曲线，并计算了RF16模型的最佳阈值，结果保存在`Pan_Thresholds.txt`（泛癌模型）和`Thresholds.txt`（癌症特异性模型）中
+以“训练组--泛癌”为例：
+- **ROC-PRC曲线及其具体数值**：
+  ![ROCPRC1](./md-image/ROCPRC1.png){:width=250 height=250}
+  ![ROCPRC2](./md-image/ROCPRC2.png){:width=300 height=300}
+  可以看到RF16模型在ROC中最靠左上角，在PRC中最平滑且靠上，对患者是否有应答的预测能力最好
+- **在ROC曲线上取最佳阈值**：
+  ![最佳阈值1](./md-image/最佳阈值1.png){:width=400 height=400}
+  ![最佳阈值2](./md-image/最佳阈值2.png){:width=80 height=80}
+  曲线上标的那个点就是最佳阈值点，点上标注的是`最佳阈值 (特异度, 敏感度)`
+
+**所有的最佳阈值结果**：
 ![最佳阈值](./md-image/最佳阈值.png){:width=400 height=400}
 对于验证组，分组方式同训练组，但只画了ROC和PRC曲线，没有计算最佳阈值；在后面的计算中，验证组只使用癌症特异性模型，使用的最佳阈值是`Thresholds.txt`（因为都是癌症特异性模型）
 ### Evaluate_Performance
@@ -43,3 +54,14 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
   其实就是统计上面图中5组预测结果（5个红框），与真实值`Response`相对比，看看预测对了没
   ![Evaluate_Performance2](./md-image/Evaluate_Performance2.png){:width=600 height=600}
   类似的还有4个输出，除了上面的“训练组--泛癌模型预测结果”，还有“训练组--特异性模型预测结果”、“训练组--TMB预测结果”、“验证组--特异性模型预测结果”、“验证组--TMB预测结果”
+### Brier_score
+进行生存分析，探究模型预测得分（`RF16_prob`/`RF11_prob`/`TMB`）与生存状态的关系
+也是将训练组和验证组分开来，每组都进行泛癌、Melanoma、NSCLC、Others共4组分析，计算了Brier score并绘制了Prediction error curves图
+以“训练组--Pan-cancer”为例：
+- **Brier score分析结果**：
+  ![Brier_score1](./md-image/Brier_score1.png){:width=300 height=300}
+  红框内的就是各模型关于生存状态的总Brier score
+  - `Reference`：画图函数提供的，使用`marginal  Kaplan-Meier`方法建模进行预测的结果
+- **Prediction error curves图**：
+  ![Brier_score2](./md-image/Brier_score2.png){:width=300 height=300}
+  该图展示了模型对不同生存时间的患者的预测能力，纵坐标`是Brier score`，因此曲线越靠下预测效果越好。可以看到RF16（红色线）对生存状态的预测能力几乎也是最好的

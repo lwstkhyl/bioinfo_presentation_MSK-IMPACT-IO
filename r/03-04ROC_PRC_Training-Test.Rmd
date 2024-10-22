@@ -48,8 +48,8 @@ get_optimal_threshold <- function(data){
     auc.polygon = TRUE, auc.polygon.col = "#D1F2EB",
     legacy.axes = TRUE
   );
-  # legend("bottomright", legend = c("RF16"), col = c("red"), lwd = 2);
-  title("RF16");
+  legend("bottomright", legend = c("RF16"), col = c("red"), lwd = 2, bty = "n");
+  # title("RF16");
   pan_threshold <- ci.thresholds(prob_roc, thresholds = "best");
   return(pan_threshold);
 }

@@ -25,54 +25,34 @@ brier_score <- function(data, cancer_type = -1){
     formula = Surv(OS_Months,OS_Event) ~ 1
   );
   print(brier);
-  plot(brier,xlim=c(0,50));
+  plot(brier, xlim = c(0, 50));
 }
-```
-
-```{r}
-
-## Brier score for OS, Pan-cancer
-f1 <- coxph(Surv(OS_Months,OS_Event)~RF16_prob,data=data,x=TRUE,y=TRUE)
-f2 <- coxph(Surv(OS_Months,OS_Event)~RF11_prob,data=data,x=TRUE,y=TRUE)
-f3 <- coxph(Surv(OS_Months,OS_Event)~TMB,data=data,x=TRUE,y=TRUE)
-
-brier <- pec(list("RF16"=f1, "RF11"=f2, "TMB"=f3),data=data,formula=Surv(OS_Months,OS_Event)~1)
-print(brier)
-plot(brier,xlim=c(0,50))
-
-## Brier score for OS, Melanoma
-data2 <- data[grep("0", data$Cancer_Type),]
-f1 <- coxph(Surv(OS_Months,OS_Event)~RF16_prob,data=data2,x=TRUE,y=TRUE)
-f2 <- coxph(Surv(OS_Months,OS_Event)~RF11_prob,data=data2,x=TRUE,y=TRUE)
-f3 <- coxph(Surv(OS_Months,OS_Event)~TMB,data=data2,x=TRUE,y=TRUE)
-
-brier <- pec(list("RF16"=f1, "RF11"=f2, "TMB"=f3),data=data2,formula=Surv(OS_Months,OS_Event)~1)
-print(brier)
-plot(brier,xlim=c(0,50))
-
-## Brier score for OS, NSCLC
-data2 <- data[grep("1", data$Cancer_Type),]
-f1 <- coxph(Surv(OS_Months,OS_Event)~RF16_prob,data=data2,x=TRUE,y=TRUE)
-f2 <- coxph(Surv(OS_Months,OS_Event)~RF11_prob,data=data2,x=TRUE,y=TRUE)
-f3 <- coxph(Surv(OS_Months,OS_Event)~TMB,data=data2,x=TRUE,y=TRUE)
-
-brier <- pec(list("RF16"=f1, "RF11"=f2, "TMB"=f3),data=data2,formula=Surv(OS_Months,OS_Event)~1)
-print(brier)
-plot(brier,xlim=c(0,50))
-
-## Brier score for OS, Others
-data2 <- data[grep("2", data$Cancer_Type),]
-f1 <- coxph(Surv(OS_Months,OS_Event)~RF16_prob,data=data2,x=TRUE,y=TRUE)
-f2 <- coxph(Surv(OS_Months,OS_Event)~RF11_prob,data=data2,x=TRUE,y=TRUE)
-f3 <- coxph(Surv(OS_Months,OS_Event)~TMB,data=data2,x=TRUE,y=TRUE)
-
-brier <- pec(list("RF16"=f1, "RF11"=f2, "TMB"=f3),data=data2,formula=Surv(OS_Months,OS_Event)~1)
-print(brier)
-plot(brier,xlim=c(0,50))
 ```
 - `Surv(OS_Months, OS_Event)`构建了一个生存状态对象（考虑是否死亡和生存时间）
 - `coxph`函数根据上面的`生存状态对象`和`各模型预测得分`进行cox分析。在通常的分析中，我们一般是看分析结果的p值，它标识`各模型预测得分`是否影响（或者说“决定”/“可以预测”）`生存状态`，以及影响的程度。但在这里，我们用cox分析结果来计算`Brier score`，来更准确明显地查看模型的预测能力
 
-该图展示了模型对不同生存时间的患者的预测能力，纵坐标`是Brier score`，因此曲线越靠下预测效果越好
-Reference线：画图函数提供的，使用`marginal  Kaplan-Meier`方法建模进行预测的结果
+**训练组**：
+```{r}
+print("训练组--Pan-cancer：");
+brier_score(data_training);
+print("训练组--Melanoma：");
+brier_score(data_training, 0);
+print("训练组--NSCLC：");
+brier_score(data_training, 1);
+print("训练组--Others：");
+brier_score(data_training, 2);
+```
+**验证组**：
+```{r}
+print("验证组--Pan-cancer：");
+brier_score(data_test);
+print("验证组--Melanoma：");
+brier_score(data_test, 0);
+print("验证组--NSCLC：");
+brier_score(data_test, 1);
+print("验证组--Others：");
+brier_score(data_test, 2);
+```
+`Reference`：画图函数提供的，使用`marginal  Kaplan-Meier`方法建模进行预测的结果
+该图展示了模型对不同生存时间的患者的预测能力，纵坐标`是Brier score`，因此曲线越靠下预测效果越好。可以看到RF16（红色线）对生存状态的预测能力几乎也是最好的
 
