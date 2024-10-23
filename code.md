@@ -1,3 +1,27 @@
+<a id="mulu">目录</a>
+<a href="#mulu" class="back">回到目录</a>
+<style>
+    .back{width:40px;height:40px;display:inline-block;line-height:20px;font-size:20px;background-color:lightyellow;position: fixed;bottom:50px;right:50px;z-index:999;border:2px solid pink;opacity:0.3;transition:all 0.3s;color:green;}
+    .back:hover{color:red;opacity:1}
+    img{vertical-align:bottom;}
+</style>
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=3 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [GridSearch/RandomForestClassifier](#gridsearchrandomforestclassifier)
+- [ROC_PRC](#roc_prc)
+- [Evaluate_Performance](#evaluate_performance)
+- [Brier_score](#brier_score)
+- [C-index](#c-index)
+- [Survival](#survival)
+
+<!-- /code_chunk_output -->
+
+<!-- 打开侧边预览：f1->Markdown Preview Enhanced: open...
+只有打开侧边预览时保存才自动更新目录 -->
+
 ### GridSearch/RandomForestClassifier
 这部分主要探究：构造的模型中，哪些因素的影响最大
 作者首先按癌症类型将数据集随机分成训练/验证组，训练组有80%的样本(n=1184)、验证组有20%的样本(n=295)
@@ -68,4 +92,22 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
   该图展示了模型对不同生存时间的患者的预测能力，纵坐标`是Brier score`，因此曲线越靠下预测效果越好。可以看到RF16（红色线）对生存状态的预测能力几乎也是最好的
 ### C-index
 计算了训练组和验证组中，`RF16_prob`/`RF11_prob`/`TMB`这3个模型对于两种生存状态（`OS`和`PFS`）的预测能力，也是分成泛癌、Melanoma、NSCLC、Others共4组，并比较了每个模型c-index值的差异
+以测试组--Melanoma--OS为例：
+![cindex1](./md-image/cindex1.png){:width=150 height=150}
+![cindex2](./md-image/cindex2.png){:width=150 height=150}
+可以看到`RF16`的cindex值较高，且与另两组间p值基本都<0.05，说明`RF16`显著优于另两组模型
 
+
+### Survival
+进行生存分析：根据`RF16`模型的预测结果，将样本分为`R`和`NR`两组，计算这两组生存状态的差异
+以测试组--Melanoma--OS为例：
+![Survival2](./md-image/Survival2.png){:width=250 height=250}
+绘制survplot图：
+![Survival1](./md-image/Survival1.png){:width=400 height=400}
+横坐标是时间，下面图的纵坐标是存活人数，即在两组中，在对应时间有多少人还存活；上面图的纵坐标是生存概率，根据下面图的存活人数/总人数计算得到
+可以看到`R`（有应答）组的生存概率明显高于`NR`（无应答）组，HR值为0.24（远小于1），p值<0.05且CI没有跨过“1”这个点（说明得到的HR有统计学意义），说明模型的分组能较准确地预测生存状态
+
+---
+
+在作者提供的代码中，对于训练组和验证组这2组，作者用`RF16`/`TMB`这2个模型都画了图，每组都分为泛癌+3种癌症共4种，生存状态也分为`OS`和`PFS`2种，因此共画了2\*3\*4\*2=32张图，但论文实际呈现的图只有验证组的`RF16`模型的8张图，因此我的代码中也只画了这8张（[C-index](#c-index)也是）
+作者将cindex和生存分析的结果画到了一张图中，还是以测试组--Melanoma--OS为例：

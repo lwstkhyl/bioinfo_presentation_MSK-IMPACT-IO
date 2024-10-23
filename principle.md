@@ -1,3 +1,29 @@
+<a id="mulu">目录</a>
+<a href="#mulu" class="back">回到目录</a>
+<style>
+    .back{width:40px;height:40px;display:inline-block;line-height:20px;font-size:20px;background-color:lightyellow;position: fixed;bottom:50px;right:50px;z-index:999;border:2px solid pink;opacity:0.3;transition:all 0.3s;color:green;}
+    .back:hover{color:red;opacity:1}
+    img{vertical-align:bottom;}
+</style>
+
+<!-- @import "[TOC]" {cmd="toc" depthFrom=3 depthTo=6 orderedList=false} -->
+
+<!-- code_chunk_output -->
+
+- [数据说明](#数据说明)
+    - [一些概念](#一些概念)
+    - [源数据各列含义](#源数据各列含义)
+- [算法分析](#算法分析)
+    - [Model description](#model-description)
+    - [Logistic regression analysis](#logistic-regression-analysis)
+    - [ROC and precision-recall curve analyses](#roc-and-precision-recall-curve-analyses)
+    - [Statistical analyses](#statistical-analyses)
+
+<!-- /code_chunk_output -->
+
+<!-- 打开侧边预览：f1->Markdown Preview Enhanced: open...
+只有打开侧边预览时保存才自动更新目录 -->
+
 **文章的主要目的**：开发一个机器学习模型，根据各种因素（或者说指标）预测患者是否对ICB治疗有反应（注意不是预测生存时间或者说预后）
 ### 数据说明
 ##### 一些概念
@@ -42,6 +68,12 @@
 - >0.9：高准确度
 
 计算方法：把所有研究对象随机每2个划为一组。例如在生存分析中，对于一组患者，如果生存时间较长的那个人的预测生存时间也较长，则称之为预测结果与实际结果一致
+**风险比(HR)**：用于评估一个二分类因素对生存状态的影响。越远离1，影响越大。比如评估“性别”对患者死亡概率的影响，计算`女性`对`男性`的风险比
+- HR=1：男性女性死亡速度相同，性别无影响
+- HR>1：女性风险更高，值越大，风险越大。例如HR=2，就是女性死亡速度是男性的2倍
+- HR<1：女性风险更低，值越小，风险越小。例如HR=0.5，就是女性死亡速度是男性的一半
+
+**95%置信区间(CI)**：用同样的步骤，去计算置信区间，那么如果重复独立地计算100次，有95%的概率计算出来的区间会包含真实参数值，即大概会有95个置信区间会包含真值。虽然它不是指“CI有95%的概率包括真实参数”，但可以认为真实参数大概率就在CI内，因此通常把CI作为目标参数可能取值的上下界
 
 ##### 源数据各列含义
 | 列名                                                 | 含义                                | 补充                                    |

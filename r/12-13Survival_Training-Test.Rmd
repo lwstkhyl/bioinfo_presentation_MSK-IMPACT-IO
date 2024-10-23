@@ -1,0 +1,121 @@
+---
+title: "12-13Survival_Training-Test"
+output: html_document
+date: "2024-10-23"
+---
+
+```{r}
+library("ggplot2");
+library("survminer");
+library("survival");
+library(cowplot);
+predict_training <- read.table("../pycharm/data/Training_RF_Prob_Predicted.txt", header = T, sep = '\t');
+predict_test <- read.table("../pycharm/data/Test_RF_Prob_Predicted.txt", header = T, sep = '\t');
+```
+
+```{r}
+cancer_name <- c("Melanoma", "NSCLC", "Others");
+add_text <- function(p, text, pos = "righttop"){
+  change_p <- function(p){  # 将p改成1.1 x 10^-6^形式
+    if(p>0.001){
+      p <- format(as.numeric(as.character(p)), scientific = F);
+      return(round(as.numeric(p), 3));
+    }
+    p <- format(as.numeric(as.character(p)), scientific = T)
+    split_res <- strsplit(as.character(p), "e");
+    front <- split_res[[1]][1];
+    end <- split_res[[1]][2];
+    front <- sprintf("%0.2f", as.numeric(front));
+    if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
+    res <- substitute(
+      paste(front %*% ten^end),
+      list(front = front, end = end, ten = 10));
+    return(res);
+  }
+  ann <- c(
+    substitute(paste(italic(P), " = ", p), list(p = change_p(text$P))),
+    substitute(paste("HR = ", hr), list(hr = sprintf("%0.2f", text$HR))),
+    substitute(paste("95% CI = ", ci), list(ci = text$CI))
+  );
+  if(pos=="righttop"){
+    x <- 30;
+    y <- 1;
+  } else {
+    x <- -1.8;
+    y <- 0.25;
+  }
+  if(text$P>0.0001){
+    distance <- c(0, 0.08, 0.16);  # 每行往下偏移的距离
+  } else {
+    distance <- c(0, 0.1, 0.18);
+  }
+  for(i in 1:length(ann)){
+    p <- p +
+      annotate(
+        geom = "text",
+        label = as.character(as.expression(ann[i])),
+        x = x,
+        y = y-distance[i],
+        hjust = 0,
+        vjust = 1,
+        parse = T
+      );
+  }
+  return(p);
+}
+get_survplot <- function(data, cancer_type = -1, os_type = 'os', text_pos = "righttop"){
+  if(cancer_type!=-1) {
+    data <- data[grep(as.character(cancer_type), data$Cancer_Type), ];
+    title <- cancer_name[cancer_type+1];
+  } else {
+    title <- "Pan-cancer";
+  }
+  if(os_type=='os') {
+    fit <- survfit(Surv(OS_Months, OS_Event) ~ RF16, data = data);
+    surv_object <- Surv(time = data$OS_Months, event = data$OS_Event);
+    xlab_content <- "Overall survival (months)";
+  } else {
+    fit <- survfit(Surv(PFS_Months, PFS_Event) ~ RF16, data = data);
+    surv_object <- Surv(time = data$PFS_Months, event = data$PFS_Event);
+    xlab_content <- "Progression-free survival (months)"
+  }
+  coxph_survfit <- coxph(surv_object ~ RF16, data = data)  # 计算HR及其CI
+  diff <- survdiff(surv_object ~ RF16, data = data);  # 计算p值
+  sum_cox <- summary(coxph_survfit);
+  text <- data.frame(
+    'P' = 1-pchisq(diff$chisq, df = 1),
+    'HR' = sum_cox$conf.int[, "exp(coef)"],
+    'CI' = paste0(sprintf("%0.2f", sum_cox$conf.int[, 3:4]), collapse = '-')
+  );
+  p <- ggsurvplot(
+    fit, 
+    data, 
+    pval = F, 
+    conf.int = FALSE, 
+    palette = c("#2E9FDF", "#E7B800"),
+    risk.table = TRUE, risk.table.y.text.col = TRUE,
+    font.legend = 13
+  );
+  p$plot <- p$plot + 
+    labs(title = title) +  # 添加标题
+    theme(plot.title = element_text(hjust = 0.5)) +  # 标题居中
+    theme(legend.position = "none") +  # 删除图例
+    xlab(NULL);  # 删除上面图的x轴标签
+  p$plot <- add_text(p$plot, text, text_pos);  # 添加注释
+  p$table <- p$table + 
+    ylab(NULL) +  # 去掉下面图的y轴标签
+    xlab(xlab_content);  # 更改下面图的x轴标签
+  res_p <- plot_grid(  # 组合上下图
+    p$plot, p$table, ncol = 1, 
+    align = "v",  # x轴对齐
+    rel_heights = c(2, 1)  # 上下图的高度比例
+  );
+  return(res_p);
+}
+```
+
+```{r}
+res <- get_survplot(predict_test, 0, text_pos = "leftbottom")
+
+```
+
