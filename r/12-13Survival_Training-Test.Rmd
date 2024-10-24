@@ -14,23 +14,23 @@ library(cowplot);
 **画图函数**：
 ```{r}
 cancer_name <- c("Melanoma", "NSCLC", "Others");
-change_p <- function(p){  # 将p改成1.1 x 10^-6^形式
-  if(p>0.001){
-    p <- round(as.numeric(p), 3);
-    return(format(as.numeric(as.character(p)), scientific = F));
-  }
-  p <- format(as.numeric(as.character(p)), scientific = T)
-  split_res <- strsplit(as.character(p), "e");
-  front <- split_res[[1]][1];
-  end <- split_res[[1]][2];
-  front <- sprintf("%0.2f", as.numeric(front));
-  if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
-  res <- substitute(
-    paste(front %*% ten^end),
-    list(front = front, end = end, ten = 10));
-  return(res);
-}
 add_text <- function(p, text, pos = "righttop"){
+  change_p <- function(p){  # 将p改成1.1 x 10^-6^形式
+    if(p>0.001){
+      p <- round(as.numeric(p), 3);
+      return(format(as.numeric(as.character(p)), scientific = F));
+    }
+    p <- format(as.numeric(as.character(p)), scientific = T)
+    split_res <- strsplit(as.character(p), "e");
+    front <- split_res[[1]][1];
+    end <- split_res[[1]][2];
+    front <- sprintf("%0.2f", as.numeric(front));
+    if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
+    res <- substitute(
+      paste(front %*% ten^end),
+      list(front = front, end = end, ten = 10));
+    return(res);
+  }
   ann <- c(
     substitute(paste(italic(P), " = ", p), list(p = change_p(text$P))),
     substitute(paste("HR = ", hr), list(hr = sprintf("%0.2f", text$HR))),
@@ -118,23 +118,59 @@ get_survplot <- function(data, cancer_type = -1, os_type = 'os', text_pos = "rig
 predict_training <- read.table("../pycharm/data/Training_RF_Prob_Predicted.txt", header = T, sep = '\t');
 predict_test <- read.table("../pycharm/data/Test_RF_Prob_Predicted.txt", header = T, sep = '\t');
 # 画图
-res <- get_survplot(predict_test, -1, text_pos = "leftbottom")
+plot_list <- list();
+plot_list[[1]] <- get_survplot(predict_test, -1, 'os', text_pos = "leftbottom");
+plot_list[[2]] <- get_survplot(predict_test, 0, 'os', text_pos = "leftbottom");
+plot_list[[3]] <- get_survplot(predict_test, 1, 'os', text_pos = "leftbottom");
+plot_list[[4]] <- get_survplot(predict_test, 2, 'os', text_pos = "leftbottom");
+plot_list[[5]] <- get_survplot(predict_test, -1, 'pfs', text_pos = "righttop");
+plot_list[[6]] <- get_survplot(predict_test, 0, 'pfs', text_pos = "righttop");
+plot_list[[7]] <- get_survplot(predict_test, 1, 'pfs', text_pos = "righttop");
+plot_list[[8]] <- get_survplot(predict_test, 2, 'pfs', text_pos = "righttop");
+# 保存数据
+save(plot_list, file = "data/survplot.Rdata");
 ```
-
-
+**组合cindex和生存曲线图**：
 ```{r}
-# res_list[[1]] <- res_list[[1]] + 
-#   theme(plot.margin = margin(b = 0, t = 20));
-res_list[[1]] <- get_cindex(data_test, -1, 'os', pval_xpos1 = 0.8, pval_xpos2 = 1);
-left <- plot_grid(
-  res_list[[1]], plot.new(), ncol = 1, 
-  align = "v",
-  rel_heights = c(6, 1)
-);
-
-res_p <- plot_grid(  # 组合上下图
-  left, res, ncol = 2, 
-  rel_widths = c(1, 3)
-);
+bind_plot <- function(left, right, is_print = T){
+  left <- left + 
+    theme(plot.margin = margin(l = 20, t = 30, b = 100, r = 20));
+  right <- right +  # 统一颜色，去除图边框线
+    theme(
+      plot.background = element_rect("white", linewidth = 0),
+      panel.background = element_rect("white", linewidth = 0)
+    );
+  left <- left +
+    theme(
+      plot.background = element_rect("white", linewidth = 0),
+      panel.background = element_rect("white", linewidth = 0)
+  );
+  res_p <- plot_grid(
+    left, right, ncol = 2, 
+    rel_widths = c(1, 3)
+  ) +
+    theme(
+      plot.background = element_rect("white", linewidth = 0),
+      panel.background = element_rect("white", linewidth = 0)
+    );
+  if(is_print) print(res_p);
+  return(res_p);
+}
+load("data/cindex_barplot.Rdata");
+load("data/survplot.Rdata");
+cancer_types <- c("Pan-cancer", "Melanoma", "NSCLC", "Others");
+surv_types <- c("OS", "PFS");
+file_name <- c();  # 图是由哪组数据画的，例如"Pan-cancer_OS"
+for(surv_type in surv_types){
+  for(cancer_type in cancer_types){
+    file_name <- append(file_name, paste0(cancer_type, "_", surv_type));
+  }
+}
+for(i in 1:length(plot_list)){
+  pdf(file = paste0("plot/", as.character(i), "_", file_name[i], "_cindex-surv-plot.pdf"), width = 10, height = 6);
+  p <- bind_plot(res_list[[i]], plot_list[[i]], is_print = F);
+  print(p);
+  dev.off();
+}
 ```
 

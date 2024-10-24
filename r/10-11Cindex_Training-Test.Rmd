@@ -12,23 +12,23 @@ library(ggpubr);
 ```
 **画图函数**：
 ```{r}
-change_p <- function(p){  # 改p值格式
-  if(p>=0.0001){
-    p <- round(as.numeric(p), 4);
-    return(format(as.numeric(as.character(p)), scientific = F));
-  }
-  p <- format(as.numeric(as.character(p)), scientific = T)
-  split_res <- strsplit(as.character(p), "e");
-  front <- split_res[[1]][1];
-  end <- split_res[[1]][2];
-  front <- sprintf("%0.2f", as.numeric(front));
-  if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
-  res <- substitute(
-    paste(front %*% ten^end),
-    list(front = front, end = end, ten = 10));
-  return(res);
-}
 draw_p <- function(p, pval, x, y){  # 在图上加p值
+  change_p <- function(p){  # 改p值格式
+    if(p>=0.0001){
+      p <- round(as.numeric(p), 4);
+      return(format(as.numeric(as.character(p)), scientific = F));
+    }
+    p <- format(as.numeric(as.character(p)), scientific = T)
+    split_res <- strsplit(as.character(p), "e");
+    front <- split_res[[1]][1];
+    end <- split_res[[1]][2];
+    front <- sprintf("%0.2f", as.numeric(front));
+    if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
+    res <- substitute(
+      paste(front %*% ten^end),
+      list(front = front, end = end, ten = 10));
+    return(res);
+  }
   ann <- substitute(paste(italic(P), " = ", pval), list(pval = change_p(pval)));
   if(pval>=0.0001){
     distance <- 0;  # 每行往上偏移的距离
@@ -168,14 +168,14 @@ data_training <- read.table("../pycharm/data/Training_RF_Prob.txt", header = T, 
 data_test <- read.table("../pycharm/data/Test_RF_Prob.txt", header = T, sep = '\t');
 # 画图
 res_list <- list();
-res_list[[1]] <- get_cindex(data_test, -1, 'os', pval_xpos1 = 0.5, pval_xpos2 = 1);
-res_list[[2]] <- get_cindex(data_test, 0, 'os', pval_xpos1 = 1, pval_xpos2 = 1.2);
-res_list[[3]] <- get_cindex(data_test, 1, 'os', pval_xpos1 = 1, pval_xpos2 = 1.2);
-res_list[[4]] <- get_cindex(data_test, 2, 'os', pval_xpos1 = 1, pval_xpos2 = 1.2);
-res_list[[5]] <- get_cindex(data_test, -1, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
-res_list[[6]] <- get_cindex(data_test, 0, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
-res_list[[7]] <- get_cindex(data_test, 1, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
-res_list[[8]] <- get_cindex(data_test, 2, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[1]] <- get_cindex(data_test, -1, 'os', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[2]] <- get_cindex(data_test, 0, 'os', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[3]] <- get_cindex(data_test, 1, 'os', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[4]] <- get_cindex(data_test, 2, 'os', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[5]] <- get_cindex(data_test, -1, 'pfs', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[6]] <- get_cindex(data_test, 0, 'pfs', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[7]] <- get_cindex(data_test, 1, 'pfs', pval_xpos1 = 0.8, pval_xpos2 = 1);
+res_list[[8]] <- get_cindex(data_test, 2, 'pfs', pval_xpos1 = 0.8, pval_xpos2 = 1.2);
 # 保存数据
 save(res_list, file = "data/cindex_barplot.Rdata");
 ```
