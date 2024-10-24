@@ -4,34 +4,33 @@ output: html_document
 date: "2024-10-23"
 ---
 
+**导包**：
 ```{r}
 library("ggplot2");
 library("survminer");
 library("survival");
 library(cowplot);
-predict_training <- read.table("../pycharm/data/Training_RF_Prob_Predicted.txt", header = T, sep = '\t');
-predict_test <- read.table("../pycharm/data/Test_RF_Prob_Predicted.txt", header = T, sep = '\t');
 ```
-
+**画图函数**：
 ```{r}
 cancer_name <- c("Melanoma", "NSCLC", "Others");
-add_text <- function(p, text, pos = "righttop"){
-  change_p <- function(p){  # 将p改成1.1 x 10^-6^形式
-    if(p>0.001){
-      p <- format(as.numeric(as.character(p)), scientific = F);
-      return(round(as.numeric(p), 3));
-    }
-    p <- format(as.numeric(as.character(p)), scientific = T)
-    split_res <- strsplit(as.character(p), "e");
-    front <- split_res[[1]][1];
-    end <- split_res[[1]][2];
-    front <- sprintf("%0.2f", as.numeric(front));
-    if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
-    res <- substitute(
-      paste(front %*% ten^end),
-      list(front = front, end = end, ten = 10));
-    return(res);
+change_p <- function(p){  # 将p改成1.1 x 10^-6^形式
+  if(p>0.001){
+    p <- round(as.numeric(p), 3);
+    return(format(as.numeric(as.character(p)), scientific = F));
   }
+  p <- format(as.numeric(as.character(p)), scientific = T)
+  split_res <- strsplit(as.character(p), "e");
+  front <- split_res[[1]][1];
+  end <- split_res[[1]][2];
+  front <- sprintf("%0.2f", as.numeric(front));
+  if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
+  res <- substitute(
+    paste(front %*% ten^end),
+    list(front = front, end = end, ten = 10));
+  return(res);
+}
+add_text <- function(p, text, pos = "righttop"){
   ann <- c(
     substitute(paste(italic(P), " = ", p), list(p = change_p(text$P))),
     substitute(paste("HR = ", hr), list(hr = sprintf("%0.2f", text$HR))),
@@ -44,7 +43,7 @@ add_text <- function(p, text, pos = "righttop"){
     x <- -1.8;
     y <- 0.25;
   }
-  if(text$P>0.0001){
+  if(text$P>0.001){
     distance <- c(0, 0.08, 0.16);  # 每行往下偏移的距离
   } else {
     distance <- c(0, 0.1, 0.18);
@@ -113,9 +112,29 @@ get_survplot <- function(data, cancer_type = -1, os_type = 'os', text_pos = "rig
   return(res_p);
 }
 ```
+**画图**：
+```{r}
+# 读取数据
+predict_training <- read.table("../pycharm/data/Training_RF_Prob_Predicted.txt", header = T, sep = '\t');
+predict_test <- read.table("../pycharm/data/Test_RF_Prob_Predicted.txt", header = T, sep = '\t');
+# 画图
+res <- get_survplot(predict_test, -1, text_pos = "leftbottom")
+```
+
 
 ```{r}
-res <- get_survplot(predict_test, 0, text_pos = "leftbottom")
+# res_list[[1]] <- res_list[[1]] + 
+#   theme(plot.margin = margin(b = 0, t = 20));
+res_list[[1]] <- get_cindex(data_test, -1, 'os', pval_xpos1 = 0.8, pval_xpos2 = 1);
+left <- plot_grid(
+  res_list[[1]], plot.new(), ncol = 1, 
+  align = "v",
+  rel_heights = c(6, 1)
+);
 
+res_p <- plot_grid(  # 组合上下图
+  left, res, ncol = 2, 
+  rel_widths = c(1, 3)
+);
 ```
 

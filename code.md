@@ -94,7 +94,7 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 计算了训练组和验证组中，`RF16_prob`/`RF11_prob`/`TMB`这3个模型对于两种生存状态（`OS`和`PFS`）的预测能力，也是分成泛癌、Melanoma、NSCLC、Others共4组，并比较了每个模型c-index值的差异
 以测试组--Melanoma--OS为例：
 ![cindex1](./md-image/cindex1.png){:width=150 height=150}
-![cindex2](./md-image/cindex2.png){:width=150 height=150}
+![cindex2](./md-image/cindex2.png){:width=500 height=500}
 可以看到`RF16`的cindex值较高，且与另两组间p值基本都<0.05，说明`RF16`显著优于另两组模型
 
 
@@ -111,3 +111,4 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 
 在作者提供的代码中，对于训练组和验证组这2组，作者用`RF16`/`TMB`这2个模型都画了图，每组都分为泛癌+3种癌症共4种，生存状态也分为`OS`和`PFS`2种，因此共画了2\*3\*4\*2=32张图，但论文实际呈现的图只有验证组的`RF16`模型的8张图，因此我的代码中也只画了这8张（[C-index](#c-index)也是）
 作者将cindex和生存分析的结果画到了一张图中，还是以测试组--Melanoma--OS为例：
+

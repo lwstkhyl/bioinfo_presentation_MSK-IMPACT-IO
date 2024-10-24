@@ -4,15 +4,115 @@ output: html_document
 date: "2024-10-22"
 ---
 
-**读取数据**：
+**导包**：
 ```{r}
-library("survcomp")
-data_training <- read.table("../pycharm/data/Training_RF_Prob.txt", header = T, sep = '\t');
-data_test <- read.table("../pycharm/data/Test_RF_Prob.txt", header = T, sep = '\t');
+library("survcomp");
+library(ggplot2);
+library(ggpubr);
 ```
-
+**画图函数**：
 ```{r}
-get_cindex <- function(data, cancer_type = -1, os_type = 'os'){
+change_p <- function(p){  # 改p值格式
+  if(p>=0.0001){
+    p <- round(as.numeric(p), 4);
+    return(format(as.numeric(as.character(p)), scientific = F));
+  }
+  p <- format(as.numeric(as.character(p)), scientific = T)
+  split_res <- strsplit(as.character(p), "e");
+  front <- split_res[[1]][1];
+  end <- split_res[[1]][2];
+  front <- sprintf("%0.2f", as.numeric(front));
+  if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
+  res <- substitute(
+    paste(front %*% ten^end),
+    list(front = front, end = end, ten = 10));
+  return(res);
+}
+draw_p <- function(p, pval, x, y){  # 在图上加p值
+  ann <- substitute(paste(italic(P), " = ", pval), list(pval = change_p(pval)));
+  if(pval>=0.0001){
+    distance <- 0;  # 每行往上偏移的距离
+  } else {
+    distance <- 0.01;
+  }
+  p <- p +
+  annotate(
+    geom = "text",
+    label = as.character(as.expression(ann)),
+    x = x,
+    y = y + distance,
+    hjust = 0,
+    vjust = 1,
+    parse = T
+  );
+  return(p);
+}
+draw_line <- function(p, start, end, ypos, height){  # 在图上画p值下面的线
+  p <- p +
+    annotate(
+      "segment", 
+      x = start, xend = end,
+      y = ypos, yend = ypos, 
+      color = "black"
+  ) +
+    annotate(
+      "segment", 
+      x = start, xend = start,
+      y = ypos, yend = ypos-height, 
+      color = "black"
+  ) +
+    annotate(
+      "segment", 
+      x = end, xend = end,
+      y = ypos, yend = ypos-height, 
+      color = "black"
+  );
+  return(p);
+}
+draw_cindex <- function(data, p_list, pval_xpos1 = 1, pval_xpos2 = 1.2){  # 画图
+  data$name <- factor(data$name,levels = unique(data$name));
+  p <- ggplot(data = data, aes(x = as.factor(name), y = value, fill = name)) +
+    geom_bar(
+      stat = "identity", 
+      position = "dodge", 
+      color = "black",  # 边框线
+      # width = 0.9  # 柱子宽度
+    ) +  # 柱状图
+    geom_errorbar(  # 误差线
+      aes(ymax = error, ymin = value),
+      position = position_dodge(0.9), 
+      width = 0.15
+    ) +
+    scale_y_continuous(  # y轴刻度
+      expand = c(0, 0),  # 坐标轴从原点开始
+      limits = c(0, 1),
+      breaks = c(0.0, 0.2, 0.4, 0.6, 0.8, 1.0),
+      labels = c("0.0", "0.2", "0.4", "0.6", "0.8", "1.0")
+    ) +
+    scale_fill_manual(values = c("#D31F37", "#00B93A", "#023E7B")) +  # 柱子填充颜色
+    labs(x = "", y = "C-index") +  # xy轴标签
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +  # x轴刻度文字倾斜
+    theme(axis.ticks.x = element_blank()) +  # 隐藏x轴刻度线
+    theme(legend.position = "none") +  # 隐藏图例
+    guides(fill = F) +  # 隐藏图例
+    theme(  # 隐藏网格线和背景色
+      panel.grid.major = element_line(colour = NA),
+      panel.background = element_rect(fill = "transparent", colour = NA),
+      plot.background = element_rect(fill = "transparent", colour = NA),
+      panel.grid.minor = element_blank()
+    ) +
+    theme(  # 隐藏上侧/右侧边框线
+      panel.border = element_blank(), 
+      axis.line = element_line()
+    ) +
+    theme(plot.margin = margin(t = 20));  # 拓展图上侧显示范围，使p值完全显示
+	p <- draw_line(p, 1, 2, data$error[1] + 0.04, 0.02);
+	p <- draw_p(p, p_list[1], pval_xpos1, data$error[1] + 0.08);
+	p <- draw_line(p, 1, 3, data$error[1] + 0.1, 0.02);
+	p <- draw_p(p, p_list[2], pval_xpos2, data$error[1] + 0.14);
+  return(p);
+}
+get_cindex <- function(data, cancer_type = -1, os_type = 'os', is_print = F, pval_xpos1 = 1, pval_xpos2 = 1.2){
   if(cancer_type!=-1) data <- data[grep(as.character(cancer_type), data$Cancer_Type), ];
   if(os_type=='os') {
     surv_time <- data$OS_Months;
@@ -39,29 +139,44 @@ get_cindex <- function(data, cancer_type = -1, os_type = 'os'){
     surv.event = surv_event, 
     method = "noether"
   );
-  print(paste0("RF16：cindex--", round(c_rf16[["c.index"]], 2), ", upper cindex--", round(c_rf16[["upper"]], 2)));
-  print(paste0("RF11：cindex--", round(c_rf11[["c.index"]], 2), ", upper cindex--", round(c_rf11[["upper"]], 2)));
-  print(paste0("TMB：cindex--", round(c_tmb[["c.index"]], 2), ", upper cindex--", round(c_tmb[["upper"]], 2)));
   rf16_rf11 <- cindex.comp(c_rf16, c_rf11);
   rf16_tmb <- cindex.comp(c_rf16, c_tmb);
   rf11_tmb <- cindex.comp(c_rf11, c_tmb);
-  print(paste0("RF16-RF11 pvalue--", rf16_rf11[["p.value"]]));
-  print(paste0("RF16-TMB pvalue--", rf16_tmb[["p.value"]]));
-  print(paste0("RF11-TMB pvalue--", rf11_tmb[["p.value"]]));
-  return(list(
-    c(c_rf16[["c.index"]], c_rf11[["c.index"]], c_tmb[["c.index"]]),
-    c(c_rf16[["upper"]], c_rf11[["upper"]], c_tmb[["upper"]]),
-    c(rf16_rf11[["p.value"]], rf16_tmb[["p.value"]])
+  if(is_print==T){
+    print(paste0("RF16：cindex--", round(c_rf16[["c.index"]], 2), ", upper cindex--", round(c_rf16[["upper"]], 2)));
+    print(paste0("RF11：cindex--", round(c_rf11[["c.index"]], 2), ", upper cindex--", round(c_rf11[["upper"]], 2)));
+    print(paste0("TMB：cindex--", round(c_tmb[["c.index"]], 2), ", upper cindex--", round(c_tmb[["upper"]], 2)));
+    print(paste0("RF16-RF11 pvalue--", rf16_rf11[["p.value"]]));
+    print(paste0("RF16-TMB pvalue--", rf16_tmb[["p.value"]]));
+    print(paste0("RF11-TMB pvalue--", rf11_tmb[["p.value"]]));
+  }
+  return(draw_cindex(
+    data.frame(
+      name = c("RF16", "RF11", "TMB"),
+      value = c(c_rf16[["c.index"]], c_rf11[["c.index"]], c_tmb[["c.index"]]),
+      error = c(c_rf16[["upper"]], c_rf11[["upper"]], c_tmb[["upper"]])
+    ),
+    c(rf16_rf11[["p.value"]], rf16_tmb[["p.value"]]),
+    pval_xpos1, pval_xpos2
   ));
 }
 ```
-
-
+**画图**：
 ```{r}
-res <- get_cindex(data_test, 0, 'os')
-```
-
-```{r}
-
+# 读取数据
+data_training <- read.table("../pycharm/data/Training_RF_Prob.txt", header = T, sep = '\t');
+data_test <- read.table("../pycharm/data/Test_RF_Prob.txt", header = T, sep = '\t');
+# 画图
+res_list <- list();
+res_list[[1]] <- get_cindex(data_test, -1, 'os', pval_xpos1 = 0.5, pval_xpos2 = 1);
+res_list[[2]] <- get_cindex(data_test, 0, 'os', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[3]] <- get_cindex(data_test, 1, 'os', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[4]] <- get_cindex(data_test, 2, 'os', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[5]] <- get_cindex(data_test, -1, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[6]] <- get_cindex(data_test, 0, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[7]] <- get_cindex(data_test, 1, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
+res_list[[8]] <- get_cindex(data_test, 2, 'pfs', pval_xpos1 = 1, pval_xpos2 = 1.2);
+# 保存数据
+save(res_list, file = "data/cindex_barplot.Rdata");
 ```
 
