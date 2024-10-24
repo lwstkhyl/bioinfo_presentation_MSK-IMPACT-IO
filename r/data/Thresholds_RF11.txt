@@ -1,9 +1,10 @@
 Melanoma Threshold95% CI (2000 stratified bootstrap replicates):
  thresholds sp.low sp.median sp.high se.low se.median se.high
-  0.3825405 0.5301    0.6265  0.7349 0.7727    0.8636  0.9394
+  0.5110685 0.9398    0.9759       1 0.3636    0.4848  0.6061
 NSCLC Threshold95% CI (2000 stratified bootstrap replicates):
  thresholds sp.low sp.median sp.high se.low se.median se.high
-   0.290355 0.6903    0.7387  0.7871  0.675      0.75   0.825
+  0.2655730 0.6742    0.7258  0.7774 0.6165    0.6917   0.775
+  0.2759694 0.7870    0.8258  0.8677 0.5000    0.5917   0.675
 Others Threshold95% CI (2000 stratified bootstrap replicates):
  thresholds sp.low sp.median sp.high se.low se.median se.high
-  0.2255848 0.7394    0.7775  0.8136 0.8346    0.8872  0.9398
+  0.2588865   0.75     0.786  0.8242 0.5789    0.6617  0.7368

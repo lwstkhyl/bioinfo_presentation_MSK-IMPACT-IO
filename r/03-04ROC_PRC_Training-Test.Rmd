@@ -36,8 +36,12 @@ draw_ROC_PRC <- function(data, cancer_type = ""){
   print(paste0("|----------", paste(replicate(nchar(cancer_type), "-"), collapse = ""), "----------|"));
 }
 # 计算最佳阈值
-get_optimal_threshold <- function(data){
-  prob_roc <- roc(data$Response, data$RF16_prob);
+get_optimal_threshold <- function(data, type = "RF16"){
+  if(type == "RF16"){
+    prob_roc <- roc(data$Response, data$RF16_prob);
+  } else {
+    prob_roc <- roc(data$Response, data$RF11_prob);
+  }
   par(pty = "s");
   plot.roc(
     prob_roc, 
@@ -48,8 +52,8 @@ get_optimal_threshold <- function(data){
     auc.polygon = TRUE, auc.polygon.col = "#D1F2EB",
     legacy.axes = TRUE
   );
-  legend("bottomright", legend = c("RF16"), col = c("red"), lwd = 2, bty = "n");
-  # title("RF16");
+  legend("bottomright", legend = c(type), col = c("red"), lwd = 2, bty = "n");
+  # title(type);
   pan_threshold <- ci.thresholds(prob_roc, thresholds = "best");
   return(pan_threshold);
 }
@@ -60,10 +64,10 @@ write_optimal_threshold <- function(pan_threshold, cancer_type, file_path){
   # 注：capture.output函数必须在终端中运行才可正常工作，在rmd中运行只能输出第一行内容
 }
 # 训练组
-training_func <- function(data, cancer_type = "Pan-cancer", file_path = "data/Pan_Thresholds.txt"){
+training_func <- function(data, cancer_type = "Pan-cancer", file_path = "data/Pan_Thresholds.txt", type = "RF16"){
   draw_ROC_PRC(data, cancer_type);
   write_optimal_threshold(
-    get_optimal_threshold(data),
+    get_optimal_threshold(data, type = type),
     cancer_type,
     file_path
   );
@@ -74,15 +78,19 @@ training_func <- function(data, cancer_type = "Pan-cancer", file_path = "data/Pa
 data <- read.table('../pycharm/data/Training_RF_Prob.txt', header = T, sep = '\t');
 # 泛癌
 training_func(data);
+training_func(data, "Pan-cancer", "data/Pan_Thresholds_RF11.txt", "RF11");
 # Melanoma
 data_Melanoma <- data[grep("0", data$Cancer_Type), ];
 training_func(data_Melanoma, "Melanoma", "data/Thresholds.txt");
+training_func(data_Melanoma, "Melanoma", "data/Thresholds_RF11.txt", "RF11");
 # NSCLC
 data_NSCLC <- data[grep("1", data$Cancer_Type), ];
 training_func(data_NSCLC, "NSCLC", "data/Thresholds.txt");
+training_func(data_NSCLC, "NSCLC", "data/Thresholds_RF11.txt", "RF11");
 # 其它
-data_NSCLC <- data[grep("2", data$Cancer_Type), ];
-training_func(data_NSCLC, "Others", "data/Thresholds.txt");
+data_Others <- data[grep("2", data$Cancer_Type), ];
+training_func(data_Others, "Others", "data/Thresholds.txt");
+training_func(data_Others, "Others", "data/Thresholds_RF11.txt", "RF11");
 ```
 **验证组**：
 ```{r}
