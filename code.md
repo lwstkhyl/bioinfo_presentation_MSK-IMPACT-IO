@@ -79,22 +79,31 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
   其实就是统计上面图中5组预测结果（5个红框），与真实值`Response`相对比，看看预测对了没
   ![Evaluate_Performance2](./md-image/Evaluate_Performance2.png){:width=600 height=600}
   类似的还有4个输出，除了上面的“训练组--泛癌模型预测结果”，还有“训练组--特异性模型预测结果”、“训练组--TMB预测结果”、“验证组--特异性模型预测结果”、“验证组--TMB预测结果”
+
+---
+
+作者在这部分画了两组图：
+- **混淆矩阵**：展示验证组中，`RF16`和`TMB`模型对各种癌症的预测结果（TP、TN、FP、FN）。这里以这两个模型对泛癌的预测结果为例：
+  ![evaluation_matrix](./md-image/evaluation_matrix.png){:width=300 height=300}
+- **柱状图**：展示验证组中，各模型对各种癌症的预测结果（灵敏度、特异性、准确率、阳/阴性预测值）
+  ![evaluation_barplot](./md-image/evaluation_barplot.png){:width=250 height=250}
+  横坐标就是5种预测结果，纵坐标是结果值（以百分比为单位），不同颜色代表不同模型，共分成了4大组（每组间以竖线分隔）
 ### Brier_score
 进行生存分析，探究模型预测得分（`RF16_prob`/`RF11_prob`/`TMB`）与生存状态`OS`的关系
 也是将训练组和验证组分开来，每组都进行泛癌、Melanoma、NSCLC、Others共4组分析，计算了Brier score并绘制了Prediction error curves图
 以“训练组--Pan-cancer”为例：
 - **Brier score分析结果**：
-  ![Brier_score1](./md-image/Brier_score1.png){:width=300 height=300}
+  ![Brier_score1](./md-image/Brier_score1.png){:width=400 height=400}
   红框内的就是各模型关于生存状态的总Brier score
   - `Reference`：画图函数提供的，使用`marginal  Kaplan-Meier`方法建模进行预测的结果
 - **Prediction error curves图**：
-  ![Brier_score2](./md-image/Brier_score2.png){:width=300 height=300}
+  ![Brier_score2](./md-image/Brier_score2.png){:width=400 height=400}
   该图展示了模型对不同生存时间的患者的预测能力，纵坐标`是Brier score`，因此曲线越靠下预测效果越好。可以看到RF16（红色线）对生存状态的预测能力几乎也是最好的
 ### C-index
 计算了训练组和验证组中，`RF16_prob`/`RF11_prob`/`TMB`这3个模型对于两种生存状态（`OS`和`PFS`）的预测能力，也是分成泛癌、Melanoma、NSCLC、Others共4组，并比较了每个模型c-index值的差异
 以测试组--Melanoma--OS为例：
-![cindex1](./md-image/cindex1.png){:width=150 height=150}
-![cindex2](./md-image/cindex2.png){:width=500 height=500}
+![cindex1](./md-image/cindex1.png){:width=120 height=120}
+![cindex2](./md-image/cindex2.png){:width=400 height=400}
 可以看到`RF16`的cindex值较高，且与另两组间p值基本都<0.05，说明`RF16`显著优于另两组模型
 ### Survival
 进行生存分析：根据`RF16`模型的预测结果，将样本分为`R`和`NR`两组，计算这两组生存状态的差异
