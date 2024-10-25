@@ -67,6 +67,8 @@ def evaluation(data_path, target, round_num = -1, is_print = True):
     :param data_path: 上面得到的预测结果文件。
     :param target: 根据倒数第几列计算--在有TMB的文件中，-1为TMB、-2为RF16；没有TMB时只能取-1，即RF16
     :param round_num: 保留几位小数，默认不进行四舍五入
+    :param is_print: 是否在控制台打印结果
+    :return: 返回一个二元元组，第一个值为一个一维数组，为泛癌和3中特异性癌症的灵敏度、特异性、准确率、阳/阴性预测值；第二个值为一个二维数组，其中每个子数组为泛癌和3中特异性癌症的tp、tn、fp、fn值
     """
     def show_res(tp, tn, fp, fn, is_print):  # 计算灵敏度、特异性、准确率、阳/阴性预测值，并print
         if is_print:
@@ -136,32 +138,63 @@ rf11, rf11_tptnfpfn = evaluation('data/Test_RF_Prob_Predicted.txt', -2, 2, False
 # print('验证组--TMB预测结果')
 tmb, tmb_tptnfpfn = evaluation('data/Test_RF_Prob_Predicted.txt', -1, 2, False)
 
+'''
+rf16.insert(5, 0)
+rf16.insert(11, 0)
+rf16.insert(17, 0)
+rf11.insert(5, 0)
+rf11.insert(11, 0)
+rf11.insert(17, 0)
+tmb.insert(5, 0)
+tmb.insert(11, 0)
+tmb.insert(17, 0)
 
-rf16.insert(4, 0)
-rf16.insert(10, 0)
-rf16.insert(16, 0)
-rf11.insert(4, 0)
-rf11.insert(10, 0)
-rf11.insert(16, 0)
-tmb.insert(4, 0)
-tmb.insert(10, 0)
-tmb.insert(16, 0)
-
-categories = ["Sensitivity", "Specificity", "Accuracy", "PPV", "NPV", "", "Sensitivity", "Specificity", "Accuracy", "PPV", "NPV", "", "Sensitivity", "Specificity", "Accuracy", "PPV", "NPV", "", "Sensitivity", "Specificity", "Accuracy", "PPV", "NPV"]
-bar_width = 0.3  # 条形宽度
-bar_positions_rf16 = np.arange(len(categories))
+categories = ["Sensitivity", "Specificity", "Accuracy", "PPV", "NPV", ""]
+categories = np.tile(categories, 4)[:-1]  # 重复4次，去除最后一个空占位元素("")
+bar_width = 1.1  # 条形宽度
+distance = 4  # 每组条形图的间距
+# 计算每个柱子的位置
+bar_positions_rf16 = np.arange(0, len(categories)*distance, distance)
 bar_positions_rf11 = bar_positions_rf16 + bar_width
 bar_positions_tmb = bar_positions_rf11 + bar_width
+# 调整画布大小
+fig = plt.figure(figsize = (16, 4))
 # 绘制分组条形图
-plt.bar(bar_positions_rf16, rf16, width = bar_width, label = 'RF16')
-plt.bar(bar_positions_rf11, rf11, width = bar_width, label = 'RF11')
-plt.bar(bar_positions_tmb, tmb, width = bar_width, label = 'TMB')
-# 添加图例
-plt.legend()
-# 设置x轴刻度和标签
-plt.xticks(bar_positions_rf11, categories)
-
-
-
-plt.show()
-
+plt.bar(bar_positions_rf16, rf16, width = bar_width, label = 'RF16', color = "#CF1E36", edgecolor = 'black')
+plt.bar(bar_positions_rf11, rf11, width = bar_width, label = 'RF11', color = "#04B83B", edgecolor = 'black')
+plt.bar(bar_positions_tmb, tmb, width = bar_width, label = 'TMB', color = "#013E7F", edgecolor = 'black')
+plt.legend(
+    bbox_to_anchor=(1.0, 0.74),  # 图例位置
+    framealpha = 0,  # 隐藏边框
+    handlelength = 0.7,  # 图例大小
+    fontsize = 14
+)  # 添加图例
+plt.xlabel("Model evaluation metrics in test set", fontsize = 14)  # x轴标签
+plt.ylabel("Value (%)", fontsize = 14)  # y轴标签
+plt.ylim(0, 100)  # 指定y轴范围
+x_start = bar_positions_rf16[0] - (bar_positions_rf16[6] - bar_positions_tmb[4])/2  # x轴起点
+x_end = bar_positions_tmb[len(bar_positions_tmb)-1] + (bar_positions_rf16[6] - bar_positions_tmb[4])/2  # x轴终点
+plt.xlim(x_start, x_end)  # 指定x轴范围
+plt.yticks(np.arange(0, 101, step = 25))  # 修改y轴刻度
+plt.xticks(bar_positions_rf11 + bar_width, categories, rotation = 45, ha = "right", fontsize = 12)  # 设置x轴刻度标签
+plt.subplots_adjust(bottom = 0.3)  # 调整图边距，使图完整显示
+plt.tick_params(bottom = False)  # 隐藏x轴刻度线
+# 去除图右侧和上侧的边框
+ax = plt.gca()  # 得到当前轴
+ax.spines['right'].set_color('none')
+ax.spines['top'].set_color('none')
+# 给每组图添加标题（癌症类型）
+plt.text(x = bar_positions_rf11[2], y = 105, s = "Pan-cancer", ha = "center", fontsize = 14)
+plt.text(x = bar_positions_rf11[8], y = 105, s = "Melanoma", ha = "center", fontsize = 14)
+plt.text(x = bar_positions_rf11[14], y = 105, s = "NSCLC", ha = "center", fontsize = 14)
+plt.text(x = bar_positions_rf11[20], y = 105, s = "Others", ha = "center", fontsize = 14)
+# 添加3条分隔线
+plt.plot([bar_positions_rf11[5], bar_positions_rf11[5]], [0, 100], color = "black")
+plt.plot([bar_positions_rf11[11], bar_positions_rf11[11]], [0, 100], color = "black")
+plt.plot([bar_positions_rf11[17], bar_positions_rf11[17]], [0, 100], color = "black")
+# 添加水平虚线
+plt.plot([x_start, x_end], [50, 50], "k--", linewidth = 1)
+# 保存图片
+plt.savefig("plot/evaluation_barplot.pdf", format = "pdf")
+# plt.show()
+'''
