@@ -9,6 +9,7 @@ library(ggplot2);
 library(precrec);
 library(pROC);
 library(patchwork);
+library(ggpubr);
 ```
 
 ```{r}
@@ -104,7 +105,239 @@ draw_ROC_PRC(data_Melanoma, "Melanoma");
 data_NSCLC <- data[grep("1", data$Cancer_Type), ];
 draw_ROC_PRC(data_NSCLC, "NSCLC");
 # 其它
-data_NSCLC <- data[grep("2", data$Cancer_Type), ];
-draw_ROC_PRC(data_NSCLC, "Others");
+data_Others <- data[grep("2", data$Cancer_Type), ];
+draw_ROC_PRC(data_Others, "Others");
+```
+
+
+**画小提琴图**：
+```{r}
+library(ggplot2);
+library(ggpubr);
+# 数据处理
+data <- read.table('../pycharm/data/Test_RF_Prob.txt', header = T, sep = '\t');  # 验证组
+cancer_type <- c("Pan-cancer", "Melanoma", "NSCLC","Others");
+data1_p <- c();  # 两组数据的p值
+data2_p <- c();
+# 泛癌
+data_pan <- data;  # 先复制一遍所有的数据，作为泛癌组，之后再添加各种癌症单独的样本
+data_pan$Cancer_Type <- "Pan-cancer";
+data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_pan)$p.value);
+data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_pan)$p.value);
+data_all <- data_pan;
+# Melanoma
+data_Melanoma <- data[grep("0", data$Cancer_Type), ];
+data_Melanoma$Cancer_Type <- "Melanoma";
+data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_Melanoma)$p.value);
+data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_Melanoma)$p.value);
+data_all <- rbind(data_all, data_Melanoma);
+# NSCLC
+data_NSCLC <- data[grep("1", data$Cancer_Type), ];
+data_NSCLC$Cancer_Type <- "NSCLC";
+data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_NSCLC)$p.value);
+data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_NSCLC)$p.value);
+data_all <- rbind(data_all, data_NSCLC);
+# Others
+data_Others <- data[grep("2", data$Cancer_Type), ];
+data_Others$Cancer_Type <- "Others";
+data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_Others)$p.value);
+data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_Others)$p.value);
+data_all <- rbind(data_all, data_Others);
+# RF16数据
+data1 <- data.frame(
+  response = ifelse(data_all$Response==0, "NR", "R"),
+  cancer_type = factor(data_all$Cancer_Type, levels = cancer_type), 
+  rf16 = data_all$RF16_prob
+);
+# TMB数据
+data2 <- data.frame(
+  response = ifelse(data_all$Response==0, "NR", "R"),
+  cancer_type = factor(data_all$Cancer_Type, levels = cancer_type), 
+  tmb = log2(data_all$TMB+1)
+);
+# 画RF16
+p1 <- ggplot(
+  data1, 
+  aes(x = cancer_type, y = rf16), 
+) +
+  geom_violin(  # 小提琴图
+    aes(fill = response), 
+    trim = FALSE,
+    width = 1.1,
+    position = position_dodge(0.9)  # 指定位置
+  ) +
+  scale_fill_manual(values = c("#01B1BC", "#E8B900")) +
+  scale_color_manual(values = c("black", "black")) +
+  geom_boxplot(  # 箱型图
+    aes(color = response),
+    width = 0.2,
+    outlier.size = 3,  # 离群值点的大小
+    fatten = 5,  # 中值线的粗细
+    position = position_dodge(0.9),  # 使箱型图位于小提琴图的中间
+    show_guide = FALSE  # 不显示箱型图的图例，只显示小提琴图的图例（隐藏图例中箱型图的形状）
+  ) +
+  labs(x = "Cancer type", y = "Response probability (RF16)") +  # xy轴标签
+  scale_y_continuous(  # y轴刻度
+      breaks = c(0, 0.25, 0.5, 0.75),
+      labels = c("0.00", "0.25", "0.50", "0.75")
+  ) +
+  theme(  # 隐藏网格线和背景色
+    panel.grid.major = element_line(colour = NA),
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    panel.grid.minor = element_blank()
+  ) +
+  theme(  # 隐藏上侧/右侧边框线
+    panel.border = element_blank(), 
+    axis.line = element_line()
+  ) +
+  theme(  # 隐藏x轴刻度
+    axis.ticks.x=element_blank()
+  ) +
+  theme(  # 图例
+    legend.position = c(1, 0.5),  # 图例位置
+    legend.title = element_blank(),  # 隐藏标题
+    legend.key.size = unit(12, 'pt'),  # 图例大小
+    legend.text = element_text(size = 12),  # 图例文字字号
+    legend.key.spacing.y = unit(5, 'pt'),  # 图例各项上下间距
+    legend.background = element_blank(),  # 去掉图例背景色
+    legend.key = element_blank()  # 去掉图例背景色
+  ) +
+  theme(  # xy轴标签和刻度标签字号
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 12)
+  ) +
+  theme(  # 图边距
+    plot.margin = margin(r = 50, t = 20, b = 20, l = 20)
+  );
+# 画TMB
+p2 <- ggplot(
+  data2, 
+  aes(x = cancer_type, y = tmb), 
+) +
+  geom_violin(
+    aes(fill = response), 
+    trim = FALSE,
+    width = 1.1,
+    position = position_dodge(0.9)
+  ) +
+  scale_fill_manual(values = c("#01B1BC", "#E8B900")) +
+  scale_color_manual(values = c("black", "black")) +
+  geom_boxplot(
+    aes(color = response),
+    width = 0.2,
+    outlier.size = 3,
+    fatten = 5,
+    position = position_dodge(0.9),
+    show_guide = FALSE
+  ) +
+  labs(
+    x = "Cancer type", 
+    y = substitute(
+      paste(log[2], "(TMB+1)"),list(log = "log")
+    )
+  ) +
+  scale_y_continuous(
+      breaks = c(0, 3, 6),
+      labels = c("0", "3", "6")
+  ) +
+  theme(
+    panel.grid.major = element_line(colour = NA),
+    panel.background = element_rect(fill = "transparent", colour = NA),
+    plot.background = element_rect(fill = "transparent", colour = NA),
+    panel.grid.minor = element_blank()
+  ) +
+  theme(
+    panel.border = element_blank(), 
+    axis.line = element_line()
+  ) +
+  theme(
+    axis.ticks.x=element_blank()
+  ) +
+  theme(
+    legend.position = c(1, 0.5),
+    legend.title = element_blank(),
+    legend.key.size = unit(12, 'pt'),
+    legend.text = element_text(size = 12),
+    legend.key.spacing.y = unit(5, 'pt'),
+    legend.background = element_blank(),
+    legend.key = element_blank()
+  ) +
+  theme(
+    axis.text = element_text(size = 12),
+    axis.title = element_text(size = 12)
+  ) +
+  theme(
+    plot.margin = margin(r = 50, t = 20, b = 20, l = 20)
+  );
+# 添加p值
+draw_p <- function(p, pval, x, y){  # 在图上加p值
+  change_p <- function(p){  # 改p值格式
+    if(p>=0.01){  # 如果大于0.01就保留两位小数
+      p <- round(as.numeric(p), 2);
+      return(format(as.numeric(as.character(p)), scientific = F));
+    }
+    if(p>=0.001){  # 如果大于0.001就保留3位小数
+      p <- round(as.numeric(p), 3);
+      return(format(as.numeric(as.character(p)), scientific = F));
+    }
+    if(p>=0.0001){  # 如果大于0.0001就保留4位小数
+      p <- round(as.numeric(p), 4);
+      return(format(as.numeric(as.character(p)), scientific = F));
+    }
+    p <- format(as.numeric(as.character(p)), scientific = T)
+    split_res <- strsplit(as.character(p), "e");
+    front <- split_res[[1]][1];
+    end <- split_res[[1]][2];
+    front <- sprintf("%0.2f", as.numeric(front));
+    if(substr(end, 2, 2) == '0') end <- gsub("0", "", end);
+    res <- substitute(
+      paste(front %*% ten^end),
+      list(front = front, end = end, ten = 10));
+    return(res);
+  }
+  ann <- substitute(paste(italic(P), " = ", pval), list(pval = change_p(pval)));
+  p <- p +
+  annotate(
+    geom = "text",
+    label = as.character(as.expression(ann)),
+    x = as.numeric(x),
+    y = as.numeric(y),
+    hjust = 0,
+    vjust = 1,
+    parse = T,
+    size = 6
+  );
+  return(p);
+}
+draw_p_multiple <- function(p, p_list, xpos, ypos){
+  df <- data.frame(
+    p = p_list,
+    ypos = ypos,
+    xpos = xpos
+  );
+  for(i in 1:nrow(df)){
+    p <- draw_p(p, df[i, 1], i-df[i, 3], df[i, 2]);
+  }
+  return(p);
+}
+# RF16
+p1_new <- draw_p_multiple(
+  p1, data1_p, 
+  c(0.3, 0.21, 0.29, 0.29),
+  c(0.89, 0.91, 0.72, 0.73)
+);
+pdf(file = paste0("plot/RF16-Response-probability_violin-plot.pdf"), width = 12, height = 6);
+print(p1_new);
+dev.off();
+# TMB
+p2_new <- draw_p_multiple(
+  p2, data2_p, 
+  c(0.235, 0.18, 0.185, 0.175),
+  c(8.7, 8.9, 8.4, 8.5)
+);
+pdf(file = paste0("plot/log2-TMB_violin-plot.pdf"), width = 12, height = 6);
+print(p2_new);
+dev.off();
 ```
 

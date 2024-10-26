@@ -41,7 +41,7 @@
 **两种模型的准确性**：
 ![GridSearch](./md-image/GridSearchCV.png){:width=150 height=150}
 RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（由于我这里只运行了一次，不一定是最高值）
-最后得到两个txt文件(`Test_RF_Prob.txt`和`Training_RF_Prob.txt`)，分别是验证组和训练组中的样本 使用两个模型(RF16/RF11) 预测的得分（对ICB免疫疗法有反应的概率）
+最后得到两个txt文件(`Test_RF_Prob.txt`和`Training_RF_Prob.txt`)，其中的`RF16_prob`和`RF11_prob`列，分别是验证组和训练组中的样本 使用两个模型(RF16/RF11) 预测的得分（对ICB免疫疗法有反应的概率）
 ![模型预测打分](./md-image/模型预测打分.png){:width=200 height=200}
 ### ROC_PRC
 对于训练组数据，作者根据样本的癌症种类，对上面得到的数据又进行了4次“分组”，分别是
@@ -66,6 +66,19 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 **所有的最佳阈值结果**：
 ![最佳阈值](./md-image/最佳阈值.png){:width=400 height=400}
 对于验证组，分组方式同训练组，但只画了ROC和PRC曲线，没有计算最佳阈值；在后面的计算中，验证组只使用癌症特异性模型，使用的最佳阈值是`Thresholds.txt`（因为都是癌症特异性模型）
+
+---
+
+作者在这部分画了两组图：
+- 各模型（`RF16`/`RF11`/`TMB`）对泛癌和3中癌症的**ROC曲线**：
+  ![ROC曲线](./md-image/ROC曲线.png){:width=300 height=300}
+- **小提琴图**：将数据按NR和R、癌症种类的不同进行分组，分别比较RF16预测结果和TMB
+  - `RF16_prob`--癌症种类：
+  ![violin_plot1](./md-image/violin_plot1.png){:width=400 height=400}
+  - log~2~(TMB+1)--癌症种类：
+  ![violin_plot2](./md-image/violin_plot2.png){:width=400 height=400}
+
+可以看到，在4种癌症中，RF16模型预测得分的组间差异都明显大于TMB的
 ### Evaluate_Performance
 在这一部分（5-7的python代码）中，作者干了2件事
 - 在最早的`Test_RF_Prob.txt`和`Training_RF_Prob.txt`中新添一列或两列，标明模型或者TMB预测各样本是R还是NR
@@ -119,4 +132,3 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 在作者提供的代码中，对于训练组和验证组这2组，作者用`RF16`/`TMB`这2个模型都画了图，每组都分为泛癌+3种癌症共4种，生存状态也分为`OS`和`PFS`2种，因此共画了2\*3\*4\*2=32张图，但论文实际呈现的图只有验证组的`RF16`模型的8张图，因此我的代码中也只画了这8张（[C-index](#c-index)也是）
 作者将cindex和生存分析的结果画到了一张图中，还是以测试组--Melanoma--OS为例：
 ![Survival3](./md-image/Survival3.png){:width=400 height=400}
-
