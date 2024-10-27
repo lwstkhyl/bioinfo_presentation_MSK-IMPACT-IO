@@ -112,7 +112,7 @@ draw_ROC_PRC(data_Others, "Others");
 ```
 **画图前的数据处理**：主要是把数据根据癌症类型分组，将`response`从0/1改成NR/R，将`Cancer_Type`从0/1/2改成具体的癌症名称
 ```{r}
-# 数据读取
+# 验证组
 data <- read.table('../pycharm/data/Test_RF_Prob.txt', header = T, sep = '\t');  # 验证组数据
 cancer_type <- c("Pan-cancer", "Melanoma", "NSCLC","Others");  # 癌症类型
 data1_p <- c();  # 两组数据在小提琴图中的p值
@@ -141,10 +141,30 @@ data_Others$Cancer_Type <- "Others";
 data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_Others)$p.value);
 data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_Others)$p.value);
 data_all <- rbind(data_all, data_Others);
+
+# 训练组
+data_train <- read.table('../pycharm/data/Training_RF_Prob.txt', header = T, sep = '\t');
+data_Melanoma_train <- data_train[grep("0", data_train$Cancer_Type), ];
+data_NSCLC_train <- data_train[grep("1", data_train$Cancer_Type), ];
+data_Others_train <- data_train[grep("2", data_train$Cancer_Type), ];
 ```
 **画ROC曲线**：
 ```{r}
-draw_roc <- function(data, cancer_type){
+get_threshold <- function(data){  # 计算阈值
+  roc_res <- roc(data$Response ~ data$RF16_prob);
+  threshold_res <- ci.thresholds(roc_res, thresholds = "best");
+  threshold <- dimnames(threshold_res$specificity)[[1]][1];
+  res <- data.frame(
+    threshold = sprintf("%0.3f", as.numeric(threshold)),  # 保留三位小数,
+    y = as.numeric(threshold_res$sensitivity[2]), 
+    x = 1-as.numeric(threshold_res$specificity[2])
+  );
+  return(res);
+}
+draw_roc <- function(data, cancer_type, is_test = T){  # 画ROC
+  if(is_test==F){
+    cancer_type <- paste0(cancer_type, ", training set");
+  }
   # 计算AUC值
   auc_list <- c(
     roc(data$Response ~ data$RF16_prob)[["auc"]],
@@ -192,7 +212,32 @@ draw_roc <- function(data, cancer_type){
     theme(  # xy轴刻度标签字号
       axis.text = element_text(size = font_size),
     );
+  if(is_test==F){
+    thresholds <- get_threshold(data);
+    roc_pic_new <- roc_pic_new +
+      annotate(  # 阈值点
+        geom = "point",
+        x = thresholds$x,
+        y = thresholds$y,
+        size = point_size
+      ) +
+      annotate(  # 阈值文本
+        geom = "text",
+        label = thresholds$threshold,
+        x = thresholds$x-text_x,
+        y = thresholds$y+text_y,
+        size = text_size
+      );
+  }
   return(roc_pic_new);
+}
+add_xy_label <- function(p){  # 添加xy轴标签
+  res_p <- annotate_figure(
+    p,
+    bottom = text_grob("1 - specificity", hjust = 0.5, size = font_size, vjust = -2, x = 0.52),  # vjust越小越往上
+    left = text_grob("Sensitivity", size = font_size, rot = 90)
+  );
+  return(res_p);
 }
 # 画图参数
 font_size <- 18;  # 图例和xy轴标签字号
@@ -201,8 +246,8 @@ legend_y <- 0.22;  # 图例y坐标
 line_width <- 1.1;  # 折线粗细
 legend_key_distance <- -1;  # 图例项间距，数越小越近
 legend_key_size <- 40;  # 图例项大小
-# 组合图
-p <- plot_grid(
+# 验证组
+p_test <- plot_grid(
   draw_roc(data_pan, cancer_type[1]),
   draw_roc(data_Melanoma, cancer_type[2]),
   draw_roc(data_NSCLC, cancer_type[3]),
@@ -210,14 +255,25 @@ p <- plot_grid(
   ncol = 4, 
   align = "h"  # y轴对齐
 );
-res_p <- annotate_figure(  # 添加xy轴标签
-  p,
-  bottom = text_grob("1 - specificity", hjust = 0.5, size = font_size, vjust = -2, x = 0.52),  # vjust越小越往上
-  left = text_grob("Sensitivity", size = font_size, rot = 90)
+# 训练组
+text_x <- 0.10;  # 阈值文本向左的偏移量（训练组）
+text_y <- 0.04;  # 阈值文本向上的偏移量（训练组）
+text_size <- 6.5;  # 阈值文本的大小（训练组）
+point_size <- 3;  # 标记点的大小（训练组）
+p_training <- plot_grid(
+  draw_roc(data_train, cancer_type[1], F),
+  draw_roc(data_Melanoma_train, cancer_type[2], F),
+  draw_roc(data_NSCLC_train, cancer_type[3], F),
+  draw_roc(data_Others_train, cancer_type[4], F),
+  ncol = 4, 
+  align = "h"
 );
 # 保存图片
-pdf(file = "plot/ROC.pdf", width = 20, height = 6);
-print(res_p);
+pdf(file = "plot/ROC_test.pdf", width = 20, height = 6);
+print(add_xy_label(p_test));
+dev.off();
+pdf(file = "plot/ROC_training.pdf", width = 20, height = 6);
+print(add_xy_label(p_training));
 dev.off();
 ```
 **画小提琴图**：
