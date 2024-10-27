@@ -4,14 +4,16 @@ output: html_document
 date: "2024-10-19"
 ---
 
+**导入包**：
 ```{r}
 library(ggplot2);
 library(precrec);
 library(pROC);
 library(patchwork);
 library(ggpubr);
+library(cowplot);
 ```
-
+**基础的数据分析和图**（作者提供的代码）：包括画ROC和PRC曲线，计算AUC值等
 ```{r}
 # 画ROC和PRC曲线
 draw_ROC_PRC <- function(data, cancer_type = ""){
@@ -108,19 +110,15 @@ draw_ROC_PRC(data_NSCLC, "NSCLC");
 data_Others <- data[grep("2", data$Cancer_Type), ];
 draw_ROC_PRC(data_Others, "Others");
 ```
-
-
-**画小提琴图**：
+**画图前的数据处理**：主要是把数据根据癌症类型分组，将`response`从0/1改成NR/R，将`Cancer_Type`从0/1/2改成具体的癌症名称
 ```{r}
-library(ggplot2);
-library(ggpubr);
-# 数据处理
-data <- read.table('../pycharm/data/Test_RF_Prob.txt', header = T, sep = '\t');  # 验证组
-cancer_type <- c("Pan-cancer", "Melanoma", "NSCLC","Others");
-data1_p <- c();  # 两组数据的p值
+# 数据读取
+data <- read.table('../pycharm/data/Test_RF_Prob.txt', header = T, sep = '\t');  # 验证组数据
+cancer_type <- c("Pan-cancer", "Melanoma", "NSCLC","Others");  # 癌症类型
+data1_p <- c();  # 两组数据在小提琴图中的p值
 data2_p <- c();
-# 泛癌
-data_pan <- data;  # 先复制一遍所有的数据，作为泛癌组，之后再添加各种癌症单独的样本
+# 泛癌：先复制一遍所有的数据，作为泛癌组存入data_all，之后再添加各种癌症的样本，最后data_all长度是data的两倍。目的是让Cancer_Type列有不同的值，以便画小提琴图
+data_pan <- data;
 data_pan$Cancer_Type <- "Pan-cancer";
 data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_pan)$p.value);
 data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_pan)$p.value);
@@ -143,6 +141,87 @@ data_Others$Cancer_Type <- "Others";
 data1_p <- append(data1_p, wilcox.test(RF16_prob ~ Response, data_Others)$p.value);
 data2_p <- append(data2_p, wilcox.test(TMB ~ Response, data_Others)$p.value);
 data_all <- rbind(data_all, data_Others);
+```
+**画ROC曲线**：
+```{r}
+draw_roc <- function(data, cancer_type){
+  # 计算AUC值
+  auc_list <- c(
+    roc(data$Response ~ data$RF16_prob)[["auc"]],
+    roc(data$Response ~ data$RF11_prob)[["auc"]],
+    roc(data$Response ~ data$TMB)[["auc"]]
+  );
+  auc_list <- sprintf("%0.2f", auc_list);  # 保留两位小数
+  auc_text <- c(  # AUC在图中的标注文本
+    paste0("RF16   (AUC: ", auc_list[1], ")"),
+    paste0("RF11   (AUC: ", auc_list[2], ")"),
+    paste0("TMB    (AUC: ", auc_list[3], ")")
+  );
+  # 画roc图
+  msmdat <- mmdata(
+    join_scores(data$RF16_prob, data$RF11_prob, data$TMB), 
+    data$Response,
+    modnames = c("RF16", "RF11", "TMB")
+  );
+  roc_pic <- autoplot(evalmod(msmdat))[[1]];  # 原始roc图
+  # 修改图
+  roc_pic_new <- roc_pic +
+    geom_line(linewidth = line_width) +  # 设置线条宽度
+    ggtitle("") +  # 去掉标题
+    labs(
+      x = "", y = "",  # 去掉xy轴标签
+      color = cancer_type  # 修改图例标题
+    ) +
+    scale_color_manual(
+      values = c("#E51818", "#1AA74A", "#245080"),  # 线条颜色
+      labels = auc_text  # 图例的标签内容
+    ) +
+    theme(  # 隐藏背景色
+      panel.background = element_rect(fill = "transparent", colour = NA),
+      plot.background = element_rect(fill = "transparent", colour = NA),
+    ) +
+    theme(  # 图例
+      legend.position = c(legend_x, legend_y),  # 位置
+      legend.title = element_text(hjust = 1, size = font_size),  # 标题（hjust设置右对齐）
+      legend.key.size = unit(legend_key_size, 'pt'),  # 图例大小
+      legend.text = element_text(size = font_size),  # 图例文字字号
+      legend.key.spacing.y = unit(legend_key_distance, 'lines'),  # 图例各项上下间距
+      legend.background = element_blank(),  # 去掉图例背景色
+      legend.key = element_blank()  # 去掉图例背景色
+    ) +
+    theme(  # xy轴刻度标签字号
+      axis.text = element_text(size = font_size),
+    );
+  return(roc_pic_new);
+}
+# 画图参数
+font_size <- 18;  # 图例和xy轴标签字号
+legend_x <- 0.6;  # 图例x坐标
+legend_y <- 0.22;  # 图例y坐标
+line_width <- 1.1;  # 折线粗细
+legend_key_distance <- -1;  # 图例项间距，数越小越近
+legend_key_size <- 40;  # 图例项大小
+# 组合图
+p <- plot_grid(
+  draw_roc(data_pan, cancer_type[1]),
+  draw_roc(data_Melanoma, cancer_type[2]),
+  draw_roc(data_NSCLC, cancer_type[3]),
+  draw_roc(data_Others, cancer_type[4]),
+  ncol = 4, 
+  align = "h"  # y轴对齐
+);
+res_p <- annotate_figure(  # 添加xy轴标签
+  p,
+  bottom = text_grob("1 - specificity", hjust = 0.5, size = font_size, vjust = -2, x = 0.52),  # vjust越小越往上
+  left = text_grob("Sensitivity", size = font_size, rot = 90)
+);
+# 保存图片
+pdf(file = "plot/ROC.pdf", width = 20, height = 6);
+print(res_p);
+dev.off();
+```
+**画小提琴图**：
+```{r}
 # RF16数据
 data1 <- data.frame(
   response = ifelse(data_all$Response==0, "NR", "R"),

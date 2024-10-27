@@ -70,8 +70,11 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 ---
 
 作者在这部分画了两组图：
-- 各模型（`RF16`/`RF11`/`TMB`）对泛癌和3中癌症的**ROC曲线**：
-  ![ROC曲线](./md-image/ROC曲线.png){:width=300 height=300}
+- 各模型（`RF16`/`RF11`/`TMB`）对泛癌和3种癌症的**ROC曲线**：
+  - 验证组：
+    ![ROC曲线](./md-image/ROC曲线.png){:width=250 height=250}
+  - 测试组：
+    ![ROC曲线2](./md-image/ROC曲线2.png){:width=250 height=250} 
 - **小提琴图**：将数据按NR和R、癌症种类的不同进行分组，分别比较RF16预测结果和TMB
   - `RF16_prob`--癌症种类：
   ![violin_plot1](./md-image/violin_plot1.png){:width=400 height=400}
