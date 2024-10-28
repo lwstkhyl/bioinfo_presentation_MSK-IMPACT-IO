@@ -236,7 +236,8 @@ add_xy_label <- function(p){  # 添加xy轴标签
     p,
     bottom = text_grob("1 - specificity", hjust = 0.5, size = font_size, vjust = -2, x = 0.52),  # vjust越小越往上
     left = text_grob("Sensitivity", size = font_size, rot = 90)
-  );
+  ) +
+    theme(plot.margin = margin(r = 20, l = 20));  # 加左右边距
   return(res_p);
 }
 # 画图参数
