@@ -310,3 +310,32 @@ plot_matrix_2(rf16_tptnfpfn[0], tmb_tptnfpfn[0], "Pan-cancer", False)
 plot_matrix_2(rf16_tptnfpfn[1], tmb_tptnfpfn[1], "Melanoma", False)
 plot_matrix_2(rf16_tptnfpfn[2], tmb_tptnfpfn[2], "NSCLC", False)
 plot_matrix_2(rf16_tptnfpfn[3], tmb_tptnfpfn[3], "Others", False)
+
+# 论文开头概述图中的矩阵
+data = rf16_tptnfpfn[0]
+ax = plt.gca()
+fontsize = 20
+attack_types = ["NR", "R"]
+text = np.array([["TN", "FP"], ["FN", "TP"]])
+cm = np.array([[data[1], data[2]], [data[3], data[0]]])
+cm_per = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+pic = ax.imshow(cm_per, interpolation='nearest', cmap=my_color_map, vmin=0, vmax=1)
+ax.set_title("ICB response\n(responder, non-responder)", fontsize=fontsize, y=1.05)
+ax.set_xticks([0.5])
+ax.set_yticks([0.5])
+ax.set_xticklabels(["Predicted response"], fontsize=fontsize)
+ax.set_yticklabels(["Actually response"], fontsize=fontsize, rotation=90, va='center')
+ax.tick_params(bottom=False, left=False)
+for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+    ax.text(
+        j, i+0.05, text[i, j],
+        horizontalalignment="center", color="white", fontsize=fontsize
+    )
+divider = make_axes_locatable(ax)
+colorbar_axes = divider.append_axes("right", size="10%", pad=0.2)
+colorbar = plt.colorbar(pic, aspect=2, cax=colorbar_axes)
+colorbar.set_ticks([0, 1])
+colorbar.ax.tick_params(length=0, labelsize=16)
+plt.savefig("plot/evaluation_matrix_all.pdf", format="pdf", bbox_inches='tight', pad_inches=2)
+# plt.show()
+

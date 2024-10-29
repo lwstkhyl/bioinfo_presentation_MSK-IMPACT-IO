@@ -114,6 +114,11 @@ RF16模型的最高准确率为0.7559，RF16模型的最高准确率为0.7576（
 - **柱状图**：展示验证组中，各模型对各种癌症的预测结果（灵敏度、特异性、准确率、阳/阴性预测值）
   ![evaluation_barplot](./md-image/evaluation_barplot.png){:width=250 height=250}
   横坐标就是5种预测结果，纵坐标是结果值（以百分比为单位），不同颜色代表不同模型，共分成了4大组（每组间以竖线分隔）
+
+---
+
+文章最前面概述部分也画了一个混淆矩阵，可能使用的是测试组泛癌的预测结果
+![matrix_all](./md-image/matrix_all.png){:width=300 height=300}
 ### Brier_score
 进行生存分析，探究模型预测得分（`RF16_prob`/`RF11_prob`/`TMB`）与生存状态`OS`的关系
 也是将训练组和验证组分开来，每组都进行泛癌、Melanoma、NSCLC、Others共4组分析，计算了Brier score并绘制了Prediction error curves图
