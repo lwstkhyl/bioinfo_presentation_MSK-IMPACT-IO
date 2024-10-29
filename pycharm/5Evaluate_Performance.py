@@ -6,8 +6,7 @@ from matplotlib.colors import ListedColormap
 import numpy as np
 
 
-def write_res(data_path: str, des_path: str, thresholds_file_path_RF16: str, thresholds_file_path_RF11: str,
-              have_TMB: bool = False):
+def write_res(data_path: str, des_path: str, thresholds_file_path_RF16: str, thresholds_file_path_RF11: str, have_TMB: bool = False):
     """
     在data_path中新添两列或三列，标明RF16模型、RF11模型和TMB预测各样本是R还是NR。
     如果RF16模型给出的预测值(RF16_prob)≥阈值，就说明模型预测该样本为R（应答者），否则为NR（非应答者）；

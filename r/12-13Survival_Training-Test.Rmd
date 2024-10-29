@@ -173,4 +173,30 @@ for(i in 1:length(plot_list)){
   dev.off();
 }
 ```
+**论文开头概述图中的生存曲线**：
+```{r}
+data <- read.table("../pycharm/data/Test_RF_Prob_Predicted.txt", header = T, sep = '\t');
+fit <- survfit(Surv(OS_Months, OS_Event) ~ RF16, data = data);
+p <- ggsurvplot(
+    fit, 
+    data, 
+    pval = F, 
+    conf.int = F, 
+    palette = c("#2E9FDF", "#E7B800"),
+    censor = F  # 不显示删失值（图上的小十字）
+  );
+res <- p$plot +
+  ggtitle("Patient survival after\nadministration of ICB\n(OS, PFS)") +  # 标题
+  theme(legend.position = "none") +  # 去掉图例
+  theme(plot.title = element_text(hjust = 0.5)) +  # 标题居中
+  theme(  # 隐藏xy轴刻度和刻度标签
+    axis.ticks.x = element_blank(),
+    axis.ticks.y = element_blank(),
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+  );
+pdf(file = "plot/survplot_all.pdf", width = 6, height = 6);
+print(res);
+dev.off();
+```
 
