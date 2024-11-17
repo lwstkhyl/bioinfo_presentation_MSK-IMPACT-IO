@@ -12,9 +12,9 @@
 
 - [研究过程](#研究过程)
     - [GridSearch/RandomForestClassifier](#gridsearchrandomforestclassifier)
-    - [ROC_PRC](#roc_prc)
-    - [Evaluate_Performance](#evaluate_performance)
-    - [Brier_score](#brier_score)
+    - [ROC\_PRC](#roc_prc)
+    - [Evaluate\_Performance](#evaluate_performance)
+    - [Brier\_score](#brier_score)
     - [C-index](#c-index)
     - [Survival](#survival)
 - [结论](#结论)
@@ -25,6 +25,7 @@
 只有打开侧边预览时保存才自动更新目录 -->
 
 ### 研究过程
+**文章的主要目的**：开发一个机器学习模型，通过全面整合与免疫疗法疗效相关的多种生物学特征，准确预测患者免疫治疗反应的可能性，同时也可以间接预测生存状态（预后）
 ##### GridSearch/RandomForestClassifier
 这部分主要做了两件事：
 - 探究哪些因素对ICB反应的影响最大
